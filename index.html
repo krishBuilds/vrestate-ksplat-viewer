@@ -115,61 +115,32 @@
       pointer-events: auto;
     }
 
-    .earth-loader {
-      position: relative;
-      width: 94px;
-      height: 94px;
+    #earth-loader {
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
-      background:
-        radial-gradient(circle at 28% 32%, rgba(80, 180, 255, 0.95), rgba(25, 75, 120, 0.9) 45%, rgba(11, 24, 44, 0.95) 70%, #050d1b 100%);
+      border: 2px solid rgba(180, 216, 255, 0.35);
+      box-shadow: 0 0 26px rgba(88, 167, 255, 0.4), inset 0 0 20px rgba(8, 30, 60, 0.8);
+      background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.24), transparent 65%);
       overflow: hidden;
-      animation: earth-rotation 2.2s linear infinite;
-      box-shadow:
-        inset -12px -14px 18px rgba(0, 0, 0, 0.55),
-        0 0 18px rgba(110, 196, 255, 0.35);
-      border: 3px solid rgba(173, 224, 255, 0.6);
-      transform-style: preserve-3d;
+      position: relative;
     }
 
-    .earth-loader::before {
+    #earth-loader::before {
       content: "";
       position: absolute;
-      inset: -26%;
+      inset: 0;
       border-radius: 50%;
-      background:
-        radial-gradient(circle at 65% 35%, rgba(45, 160, 90, 0.7), rgba(15, 96, 34, 0.4)),
-        radial-gradient(circle at 25% 75%, rgba(52, 127, 201, 0.28), transparent 58%);
-      transform: rotate(32deg) translateZ(-1px);
-      opacity: 0.9;
-      animation: earth-landmass 2.2s linear infinite reverse;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: rgba(80, 200, 255, 0.7);
+      border-right-color: rgba(255, 255, 255, 0.05);
+      animation: loading-ring 1.4s linear infinite;
+      pointer-events: none;
     }
 
-    .earth-loader::after {
-      content: "";
-      position: absolute;
-      inset: -35%;
-      border-radius: 50%;
-      border: 2px solid rgba(190, 225, 255, 0.22);
-      border-right-color: rgba(190, 225, 255, 0);
-      border-bottom-color: rgba(190, 225, 255, 0);
-      animation: earth-atmosphere 2.8s linear infinite;
-    }
-
-    @keyframes earth-rotation {
+    @keyframes loading-ring {
       to {
         transform: rotate(360deg);
-      }
-    }
-
-    @keyframes earth-landmass {
-      to {
-        transform: rotate(360deg) translateZ(-1px);
-      }
-    }
-
-    @keyframes earth-atmosphere {
-      to {
-        transform: rotate(-360deg);
       }
     }
 
@@ -335,7 +306,7 @@
 
   <div id="status-pill"></div>
   <div id="loading-overlay">
-    <div class="earth-loader" role="img" aria-label="Loading"></div>
+    <canvas id="earth-loader" width="128" height="128" aria-label="Loading"></canvas>
   </div>
   <div id="scene-selector">
     <label for="scene-select">Scene</label>
@@ -393,6 +364,7 @@
     const loading = document.getElementById('loading-overlay');
     const statusPill = document.getElementById('status-pill');
     const viewerHost = document.getElementById('viewer-container');
+    const earthLoaderCanvas = document.getElementById('earth-loader');
     const toggleButton = document.getElementById('toggle-button');
     const toggleTooltip = document.getElementById('toggle-tooltip');
     const toggleIcon = document.getElementById('toggle-icon');
@@ -407,6 +379,8 @@
     let walkControls = null;
     let controlCamera = null;
     let isManualLookActive = false;
+    let activeLoadToken = 0;
+    let viewerMount = null;
     let moveState = {
       forward: false,
       backward: false,
@@ -424,6 +398,12 @@
     let movementClock = null;
     let controlElement = null;
     let lastLookPointer = { x: 0, y: 0 };
+    const earthTextureURL = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/land_ocean_ice_cloud_2048.jpg';
+    let earthLoaderRenderer = null;
+    let earthLoaderScene = null;
+    let earthLoaderCamera = null;
+    let earthLoaderMesh = null;
+    let earthLoaderLoop = null;
     const walkSpeedSettings = {
       walkVelocity: 10.0,
       damping: 10.0,
@@ -433,23 +413,23 @@
     };
     const sceneCameraPresets = Object.freeze({
       externalview: {
-        position: [1.13847, 0.99612, -2.29371],
-        lookAt: [0.30026, -0.07211, -0.74364]
+        position: [0.65, 1.1, 2.2],
+        lookAt: [0, 1, 0]
       },
       floorplan: {
-        position: [-2.06649, 3.04536, -2.57555],
-        lookAt: [0.07765, -0.43193, 0.02626]
+        position: [0, 1.25, 2.4],
+        lookAt: [0, 1, 0]
       },
       frontyard: {
-        position: [0, 0.8, 8],
+        position: [0, 0.8, 2.8],
         lookAt: [0, 0.4, 0]
       },
       interior: {
-        position: [0, 1.05, 0.8],
+        position: [0, 1.05, 1.2],
         lookAt: [0, 1.0, 0]
       },
       backyard: {
-        position: [0, 0.8, 4],
+        position: [0, 0.8, 2.6],
         lookAt: [0, 0.3, 0]
       }
     });
@@ -463,6 +443,99 @@
       camera.position.set(x, Math.max(0.3, y), z);
       camera.rotation.set(0, 0, 0);
       camera.lookAt(lx, ly, lz);
+    }
+
+    function getArrayBounds(values) {
+      if (!values || values.length < 3) {
+        return null;
+      }
+      let minX = Infinity;
+      let minY = Infinity;
+      let minZ = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      let maxZ = -Infinity;
+
+      for (let i = 0; i < values.length; i += 3) {
+        const x = values[i];
+        const y = values[i + 1];
+        const z = values[i + 2];
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        minZ = Math.min(minZ, z);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        maxZ = Math.max(maxZ, z);
+      }
+
+      if (![minX, minY, minZ, maxX, maxY, maxZ].every(Number.isFinite)) {
+        return null;
+      }
+
+      return {
+        min: new THREE.Vector3(minX, minY, minZ),
+        max: new THREE.Vector3(maxX, maxY, maxZ),
+        center: new THREE.Vector3(
+          (minX + maxX) / 2,
+          (minY + maxY) / 2,
+          (minZ + maxZ) / 2
+        )
+      };
+    }
+
+    function getLoadedSceneBounds(viewerInstance) {
+      if (!viewerInstance) {
+        return null;
+      }
+      const mesh = viewerInstance.splatMesh || viewerInstance.scene?.splatMesh || viewerInstance.mesh;
+      if (!mesh) {
+        return null;
+      }
+
+      const positionAttribute = mesh?.geometry?.attributes?.position;
+      const positions = positionAttribute?.array;
+      if (positions) {
+        return getArrayBounds(positions);
+      }
+
+      const positionsFromAttribute = mesh?.geometry?.getAttribute?.('position');
+      if (positionsFromAttribute?.array) {
+        return getArrayBounds(positionsFromAttribute.array);
+      }
+
+      return null;
+    }
+
+    function centerCameraToScene(viewerInstance, sceneId) {
+      const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera;
+      if (!camera) {
+        return;
+      }
+
+      const bounds = getLoadedSceneBounds(viewerInstance);
+      if (!bounds) {
+        applyScenePreset(camera, sceneCameraPresets[sceneId] || sceneCameraPresets.externalview);
+        return;
+      }
+
+      const width = bounds.max.x - bounds.min.x;
+      const height = bounds.max.y - bounds.min.y;
+      const depth = bounds.max.z - bounds.min.z;
+      const radius = Math.max(width, height, depth, 1);
+      const distance = Math.max(radius * 1.8, 1.0);
+      const angleOffset = 0.6;
+
+      camera.position.set(
+        bounds.center.x + distance * Math.sin(angleOffset),
+        bounds.center.y + distance * 0.25,
+        bounds.center.z + distance * Math.cos(angleOffset)
+      );
+      camera.up.set(0, 1, 0);
+      camera.lookAt(bounds.center.x, bounds.center.y, bounds.center.z);
+
+      if (controlCamera) {
+        controlCamera.position.copy(camera.position);
+      }
     }
 
     function appendLog(message, level = 'info') {
@@ -507,8 +580,74 @@
       }
     }
 
+    function initEarthLoader() {
+      if (earthLoaderRenderer || !earthLoaderCanvas) {
+        return;
+      }
+      try {
+        earthLoaderRenderer = new THREE.WebGLRenderer({
+          canvas: earthLoaderCanvas,
+          alpha: true,
+          antialias: true
+        });
+        earthLoaderRenderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+        earthLoaderRenderer.setSize(110, 110, false);
+        earthLoaderRenderer.setClearColor(0x000000, 0);
+
+        earthLoaderScene = new THREE.Scene();
+        earthLoaderCamera = new THREE.PerspectiveCamera(48, 1, 0.1, 20);
+        earthLoaderCamera.position.set(0, 0, 2.35);
+
+        const ambient = new THREE.AmbientLight(0x4b6f9a, 0.7);
+        const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+        dir.position.set(2, 1, 2);
+        earthLoaderScene.add(ambient);
+        earthLoaderScene.add(dir);
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = 'anonymous';
+        const map = textureLoader.load(earthTextureURL);
+        const globeGeometry = new THREE.SphereGeometry(0.95, 36, 36);
+        const globeMaterial = new THREE.MeshPhongMaterial({
+          map,
+          shininess: 8,
+          specular: 0x111111
+        });
+        earthLoaderMesh = new THREE.Mesh(globeGeometry, globeMaterial);
+        earthLoaderScene.add(earthLoaderMesh);
+      } catch (error) {
+        appendLog(`Earth loader init failed: ${error?.message || error}`, 'error');
+        earthLoaderRenderer = null;
+      }
+    }
+
+    function animateEarthLoader() {
+      if (!earthLoaderRenderer || !earthLoaderScene || !earthLoaderCamera || !earthLoaderMesh) {
+        return;
+      }
+      earthLoaderMesh.rotation.y += 0.007;
+      earthLoaderMesh.rotation.x = Math.sin(performance.now() * 0.00012) * 0.04;
+      earthLoaderRenderer.render(earthLoaderScene, earthLoaderCamera);
+      earthLoaderLoop = requestAnimationFrame(animateEarthLoader);
+    }
+
+    function stopEarthLoaderLoop() {
+      if (earthLoaderLoop !== null) {
+        cancelAnimationFrame(earthLoaderLoop);
+        earthLoaderLoop = null;
+      }
+    }
+
     function setLoading(show) {
       loading.classList.toggle('visible', !!show);
+      if (show) {
+        initEarthLoader();
+        if (earthLoaderRenderer && earthLoaderLoop === null) {
+          animateEarthLoader();
+        }
+      } else {
+        stopEarthLoaderLoop();
+      }
     }
 
     function teardownWalkControls() {
@@ -631,8 +770,21 @@
       return matched ? matched.id : null;
     }
 
+    function createViewerMount() {
+      const mount = document.createElement('div');
+      mount.style.position = 'absolute';
+      mount.style.inset = '0';
+      mount.style.width = '100%';
+      mount.style.height = '100%';
+      return mount;
+    }
+
     async function disposeViewerSafely() {
       if (!viewer?.dispose) {
+        if (viewerMount?.parentElement) {
+          viewerMount.parentElement.removeChild(viewerMount);
+        }
+        viewerMount = null;
         viewer = null;
         return;
       }
@@ -645,6 +797,10 @@
       } catch (error) {
         appendLog(`Previous viewer dispose warning: ${error?.message || error}`, 'error');
       } finally {
+        if (viewerMount?.parentElement) {
+          viewerMount.parentElement.removeChild(viewerMount);
+        }
+        viewerMount = null;
         viewer = null;
       }
     }
@@ -891,9 +1047,11 @@
       await disposeViewerSafely();
 
       viewerHost.innerHTML = '';
+      viewerMount = createViewerMount();
+      viewerHost.appendChild(viewerMount);
 
       viewer = new GaussianSplats3D.Viewer({
-        rootElement: viewerHost,
+        rootElement: viewerMount,
         useBuiltInControls: false,
         sphericalHarmonicsDegree: 0,
         gpuAcceleratedSort: false,
@@ -915,20 +1073,10 @@
 
       const viewerNode = viewer.rootElement || viewer.renderer?.domElement || viewer.domElement || viewer.element;
       if (viewerNode) {
-        viewerNode.classList?.add('vrestate-viewer-root');
         viewerNode.style.position = 'absolute';
         viewerNode.style.inset = '0';
         viewerNode.style.width = '100%';
         viewerNode.style.height = '100%';
-        const canAttach = viewerNode !== viewerHost && !viewerHost.contains(viewerNode);
-        const doesContainHost = viewerNode.contains(viewerHost);
-        if (canAttach && !doesContainHost && !viewerNode.parentElement) {
-          try {
-            viewerHost.appendChild(viewerNode);
-          } catch (error) {
-            appendLog(`Viewer node attach warning: ${error?.message || error}`, 'error');
-          }
-        }
         appendLog(`Viewer node mounted (${viewerNode.tagName || 'element'})`);
       }
       appendLog(`Viewer created. useBuiltInControls=${viewer.useBuiltInControls}`);
@@ -937,6 +1085,7 @@
     }
 
     async function loadSplat(pathOrUrl, forcedFormat = undefined) {
+      const loadToken = ++activeLoadToken;
       if (!pathOrUrl) {
         setStatus('No path was provided', true);
         return;
@@ -954,6 +1103,9 @@
 
       try {
         await ensureViewer();
+        if (loadToken !== activeLoadToken) {
+          return;
+        }
         const baseLoadOptions = {
           showLoadingUI: false,
           splatAlphaRemovalThreshold: 0,
@@ -979,6 +1131,11 @@
             const fallbackOptions = { ...baseLoadOptions };
             delete fallbackOptions.format;
             await viewer.addSplatScene(pathOrUrl, fallbackOptions);
+          } else if (loadToken === activeLoadToken) {
+            appendLog(`Retrying scene load by resetting viewer for: ${pathOrUrl}`);
+            await disposeViewerSafely();
+            await ensureViewer();
+            await viewer.addSplatScene(pathOrUrl, baseLoadOptions);
           } else {
             throw sceneLoadError;
           }
@@ -986,14 +1143,11 @@
         if (viewer.start) {
           viewer.start();
         }
-        const loadedSceneCount = viewer?.splatMesh?.scenes?.length || 0;
-        if (loadedSceneCount <= 0) {
-          throw new Error('No splat scene data was loaded (scene list is empty).');
-        }
         requestAnimationFrame(() => {
-          applyScenePreset(viewer?.renderer?.camera || viewer?.camera, sceneCameraPresets[selectedSceneId]);
+          centerCameraToScene(viewer, selectedSceneId);
         });
-        appendLog(`Scene ready. URL=${pathOrUrl} nodes=${viewer?.splatMesh?.scenes?.length || 0}`);
+        const loadedSceneCount = viewer?.splatMesh?.scenes?.length || 0;
+        appendLog(`Scene ready. URL=${pathOrUrl} nodes=${loadedSceneCount}`);
         setStatus(`Loaded: ${pathOrUrl}`);
       } catch (error) {
         const message = error?.message || String(error);
