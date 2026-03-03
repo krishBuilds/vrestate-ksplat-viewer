@@ -115,18 +115,61 @@
       pointer-events: auto;
     }
 
-    .spinner {
-      border: 5px solid rgba(255, 255, 255, 0.3);
-      border-top: 5px solid white;
+    .earth-loader {
+      position: relative;
+      width: 94px;
+      height: 94px;
       border-radius: 50%;
-      width: 80px;
-      height: 80px;
-      animation: spin 1s linear infinite;
+      background:
+        radial-gradient(circle at 28% 32%, rgba(80, 180, 255, 0.95), rgba(25, 75, 120, 0.9) 45%, rgba(11, 24, 44, 0.95) 70%, #050d1b 100%);
+      overflow: hidden;
+      animation: earth-rotation 2.2s linear infinite;
+      box-shadow:
+        inset -12px -14px 18px rgba(0, 0, 0, 0.55),
+        0 0 18px rgba(110, 196, 255, 0.35);
+      border: 3px solid rgba(173, 224, 255, 0.6);
+      transform-style: preserve-3d;
     }
 
-    @keyframes spin {
+    .earth-loader::before {
+      content: "";
+      position: absolute;
+      inset: -26%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 65% 35%, rgba(45, 160, 90, 0.7), rgba(15, 96, 34, 0.4)),
+        radial-gradient(circle at 25% 75%, rgba(52, 127, 201, 0.28), transparent 58%);
+      transform: rotate(32deg) translateZ(-1px);
+      opacity: 0.9;
+      animation: earth-landmass 2.2s linear infinite reverse;
+    }
+
+    .earth-loader::after {
+      content: "";
+      position: absolute;
+      inset: -35%;
+      border-radius: 50%;
+      border: 2px solid rgba(190, 225, 255, 0.22);
+      border-right-color: rgba(190, 225, 255, 0);
+      border-bottom-color: rgba(190, 225, 255, 0);
+      animation: earth-atmosphere 2.8s linear infinite;
+    }
+
+    @keyframes earth-rotation {
       to {
         transform: rotate(360deg);
+      }
+    }
+
+    @keyframes earth-landmass {
+      to {
+        transform: rotate(360deg) translateZ(-1px);
+      }
+    }
+
+    @keyframes earth-atmosphere {
+      to {
+        transform: rotate(-360deg);
       }
     }
 
@@ -212,7 +255,7 @@
       transform: scale(1.1);
     }
 
-    #storysplat-button {
+    #alt-viewer-button {
       position: fixed;
       top: 74px;
       right: 20px;
@@ -227,7 +270,7 @@
       transition: background-color 0.25s ease;
     }
 
-    #storysplat-button:hover {
+    #alt-viewer-button:hover {
       background: rgba(0, 0, 0, 0.93);
     }
 
@@ -292,14 +335,13 @@
 
   <div id="status-pill"></div>
   <div id="loading-overlay">
-    <div class="spinner"></div>
+    <div class="earth-loader" role="img" aria-label="Loading"></div>
   </div>
   <div id="scene-selector">
     <label for="scene-select">Scene</label>
     <select id="scene-select"></select>
   </div>
-    <button id="storysplat-button">Open StorySplat Page</button>
-    <button id="alt-viewer-button">Open Direct Splat Viewer</button>
+  <button id="alt-viewer-button">Open Direct Splat Viewer</button>
 
   <div id="viewer-container"></div>
   <div id="nav-container"></div>
@@ -358,7 +400,6 @@
     const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
     const fullScreenIcon = document.getElementById('fullscreen-icon');
     const sceneSelect = document.getElementById('scene-select');
-    const storySplatButton = document.getElementById('storysplat-button');
     const altViewerButton = document.getElementById('alt-viewer-button');
 
     let viewer;
@@ -984,15 +1025,6 @@
         await document.exitFullscreen().catch(() => {});
         fullScreenTooltip.textContent = 'Fullscreen';
       }
-    });
-
-    storySplatButton.addEventListener('click', () => {
-      const target = new URL('storysplat.html', window.location.href);
-      const selectedScene = sceneSelect.value;
-      if (selectedScene) {
-        target.searchParams.set('scene', selectedScene);
-      }
-      window.open(target.toString(), '_blank');
     });
 
     altViewerButton.addEventListener('click', () => {
