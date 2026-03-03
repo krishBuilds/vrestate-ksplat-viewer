@@ -231,6 +231,25 @@
       background: rgba(0, 0, 0, 0.93);
     }
 
+    #alt-viewer-button {
+      position: fixed;
+      top: 74px;
+      right: 164px;
+      z-index: 1002;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+    }
+
+    #alt-viewer-button:hover {
+      background: rgba(0, 0, 0, 0.93);
+    }
+
     #toggle-icon,
     #fullscreen-icon {
       width: 30px;
@@ -279,7 +298,8 @@
     <label for="scene-select">Scene</label>
     <select id="scene-select"></select>
   </div>
-  <button id="storysplat-button">Open StorySplat Page</button>
+    <button id="storysplat-button">Open StorySplat Page</button>
+    <button id="alt-viewer-button">Open Direct Splat Viewer</button>
 
   <div id="viewer-container"></div>
   <div id="nav-container"></div>
@@ -339,6 +359,7 @@
     const fullScreenIcon = document.getElementById('fullscreen-icon');
     const sceneSelect = document.getElementById('scene-select');
     const storySplatButton = document.getElementById('storysplat-button');
+    const altViewerButton = document.getElementById('alt-viewer-button');
 
     let viewer;
     let currentObjectUrl = null;
@@ -892,7 +913,7 @@
 
       try {
         await ensureViewer();
-        await viewer.addSplatScene(pathOrUrl, {
+        const baseLoadOptions = {
           showLoadingUI: false,
           splatAlphaRemovalThreshold: 0,
           progressiveLoad: false,
@@ -905,9 +926,28 @@
               appendLog(`Load ${loaderStatus || 'progress'}: ${rounded}% ${percentCompleteLabel ? `(${percentCompleteLabel})` : ''}`.trim());
             }
           }
-        });
+        };
+
+        try {
+          await viewer.addSplatScene(pathOrUrl, baseLoadOptions);
+        } catch (sceneLoadError) {
+          const message = `${sceneLoadError?.message || sceneLoadError}`;
+          appendLog(`Primary load failed for ${pathOrUrl}: ${message}`, 'error');
+          if (`${detectedFormat}` === '1' && `${pathOrUrl}`.toLowerCase().endsWith('.ksplat')) {
+            appendLog('Retrying with auto-detected format for KSPLAT...');
+            const fallbackOptions = { ...baseLoadOptions };
+            delete fallbackOptions.format;
+            await viewer.addSplatScene(pathOrUrl, fallbackOptions);
+          } else {
+            throw sceneLoadError;
+          }
+        }
         if (viewer.start) {
           viewer.start();
+        }
+        const loadedSceneCount = viewer?.splatMesh?.scenes?.length || 0;
+        if (loadedSceneCount <= 0) {
+          throw new Error('No splat scene data was loaded (scene list is empty).');
         }
         requestAnimationFrame(() => {
           applyScenePreset(viewer?.renderer?.camera || viewer?.camera, sceneCameraPresets[selectedSceneId]);
@@ -948,6 +988,15 @@
 
     storySplatButton.addEventListener('click', () => {
       const target = new URL('storysplat.html', window.location.href);
+      const selectedScene = sceneSelect.value;
+      if (selectedScene) {
+        target.searchParams.set('scene', selectedScene);
+      }
+      window.open(target.toString(), '_blank');
+    });
+
+    altViewerButton.addEventListener('click', () => {
+      const target = new URL('alt-splat-viewer.html', window.location.href);
       const selectedScene = sceneSelect.value;
       if (selectedScene) {
         target.searchParams.set('scene', selectedScene);
