@@ -1,0 +1,973 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VR Estate Viewings · Local Viewer</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #logo-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: 45px;
+      height: auto;
+      z-index: 1100;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #logo-button img {
+      width: 100%;
+      height: auto;
+      transition: filter 0.3s ease;
+    }
+
+    #logo-button:hover img {
+      filter: brightness(0.85);
+    }
+
+    #address-bar {
+      position: fixed;
+      top: 22px;
+      right: 25px;
+      display: flex;
+      align-items: center;
+      color: white;
+      font-size: 17px;
+      z-index: 1100;
+      text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 25px;
+      padding: 7px 15px;
+      gap: 10px;
+      transition: opacity 0.3s ease;
+    }
+
+    #address-bar img {
+      width: 22px;
+      height: 22px;
+    }
+
+    #viewer-container,
+    #nav-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      margin: 0;
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    #viewer-container canvas {
+      touch-action: none;
+    }
+
+    #viewer-container {
+      z-index: 0;
+    }
+
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.75);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 12000;
+      transition: opacity 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .spinner {
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-top: 5px solid white;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #status-pill {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 13px;
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    #status-pill.active {
+      opacity: 1;
+    }
+
+    .progressBarOuterContainer,
+    .infoPanel {
+      display: none !important;
+    }
+
+    #scene-selector {
+      position: fixed;
+      top: 74px;
+      left: 20px;
+      z-index: 1002;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 10px;
+      padding: 6px 10px;
+      color: #f6f6f6;
+      font-size: 13px;
+    }
+
+    #scene-select {
+      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 13px;
+      min-width: 190px;
+    }
+
+    #scene-select option {
+      color: #111;
+    }
+
+    #toggle-button,
+    #fullscreen-button {
+      position: fixed;
+      bottom: 12px;
+      right: 20px;
+      z-index: 1000;
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    #toggle-button {
+      right: 70px;
+    }
+
+    #toggle-button:hover,
+    #fullscreen-button:hover {
+      transform: scale(1.1);
+    }
+
+    #storysplat-button {
+      position: fixed;
+      top: 74px;
+      right: 20px;
+      z-index: 1002;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+    }
+
+    #storysplat-button:hover {
+      background: rgba(0, 0, 0, 0.93);
+    }
+
+    #toggle-icon,
+    #fullscreen-icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    #toggle-tooltip,
+    #fullscreen-tooltip {
+      position: absolute;
+      bottom: 36px;
+      right: 0;
+      transform: translateX(10px);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    #toggle-button:hover #toggle-tooltip,
+    #fullscreen-button:hover #fullscreen-tooltip {
+      opacity: 1;
+    }
+
+  </style>
+</head>
+<body>
+  <a href="https://www.vrestateviewings.com" target="_blank" id="logo-button">
+    <img src="./Assets/logo.png" alt="VR Estate Viewings logo" />
+  </a>
+
+  <div id="address-bar">
+    <img src="./Assets/address-icon.png" alt="Address icon" />
+    <span>VR Estate Local Viewer</span>
+  </div>
+
+  <div id="status-pill"></div>
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+  <div id="scene-selector">
+    <label for="scene-select">Scene</label>
+    <select id="scene-select"></select>
+  </div>
+  <button id="storysplat-button">Open StorySplat Page</button>
+
+  <div id="viewer-container"></div>
+  <div id="nav-container"></div>
+
+  <button id="toggle-button">
+    <img id="toggle-icon" src="./Assets/freewalk-icon.png" alt="Toggle view mode" />
+    <div id="toggle-tooltip">Walkaround</div>
+  </button>
+
+  <button id="fullscreen-button">
+    <img id="fullscreen-icon" src="./Assets/fullscreen-icon.png" alt="Fullscreen" />
+    <div id="fullscreen-tooltip">Fullscreen</div>
+  </button>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import * as GaussianSplats3D from 'https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js';
+    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/PointerLockControls.js';
+
+    const startupAssetPath = './assets/Splat/externalview.ksplat';
+    const availableScenes = Object.freeze([
+      {
+        id: 'externalview',
+        label: 'External View',
+        path: './assets/Splat/externalview.ksplat'
+      },
+      {
+        id: 'floorplan',
+        label: 'Floorplan',
+        path: './assets/Splat/floorplan.ksplat'
+      },
+      {
+        id: 'frontyard',
+        label: 'Front Yard',
+        path: './assets/Splat/FrontYard.ksplat'
+      },
+      {
+        id: 'interior',
+        label: 'Interior',
+        path: './assets/Splat/Interior.ksplat'
+      },
+      {
+        id: 'backyard',
+        label: 'Back Yard',
+        path: './assets/Splat/BackYard.ksplat'
+      }
+    ]);
+
+    const loading = document.getElementById('loading-overlay');
+    const statusPill = document.getElementById('status-pill');
+    const viewerHost = document.getElementById('viewer-container');
+    const toggleButton = document.getElementById('toggle-button');
+    const toggleTooltip = document.getElementById('toggle-tooltip');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const fullScreenButton = document.getElementById('fullscreen-button');
+    const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
+    const fullScreenIcon = document.getElementById('fullscreen-icon');
+    const sceneSelect = document.getElementById('scene-select');
+    const storySplatButton = document.getElementById('storysplat-button');
+
+    let viewer;
+    let currentObjectUrl = null;
+    let walkControls = null;
+    let controlCamera = null;
+    let isManualLookActive = false;
+    let moveState = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+      sprint: false
+    };
+    let moveVelocity = new THREE.Vector3();
+    let moveDirection = new THREE.Vector3();
+    let previousFrameTime = performance.now();
+    let pointerLocked = false;
+    let movementLoopId = null;
+    let movementClock = null;
+    let controlElement = null;
+    let lastLookPointer = { x: 0, y: 0 };
+    const walkSpeedSettings = {
+      walkVelocity: 10.0,
+      damping: 10.0,
+      verticalSpeed: 3.0,
+      sprintMultiplier: 2.0,
+      rotationSpeed: 0.002
+    };
+    const sceneCameraPresets = Object.freeze({
+      externalview: {
+        position: [1.13847, 0.99612, -2.29371],
+        lookAt: [0.30026, -0.07211, -0.74364]
+      },
+      floorplan: {
+        position: [-2.06649, 3.04536, -2.57555],
+        lookAt: [0.07765, -0.43193, 0.02626]
+      },
+      frontyard: {
+        position: [0, 0.8, 8],
+        lookAt: [0, 0.4, 0]
+      },
+      interior: {
+        position: [0, 1.05, 0.8],
+        lookAt: [0, 1.0, 0]
+      },
+      backyard: {
+        position: [0, 0.8, 4],
+        lookAt: [0, 0.3, 0]
+      }
+    });
+
+    function applyScenePreset(camera, cameraPreset) {
+      if (!camera || !cameraPreset) {
+        return;
+      }
+      const [x, y, z] = cameraPreset.position;
+      const [lx, ly, lz] = cameraPreset.lookAt;
+      camera.position.set(x, Math.max(0.3, y), z);
+      camera.rotation.set(0, 0, 0);
+      camera.lookAt(lx, ly, lz);
+    }
+
+    function appendLog(message, level = 'info') {
+      if (level === 'error') {
+        console.error(`[Viewer] ${message}`);
+        return;
+      }
+      console.log(`[Viewer] ${message}`);
+    }
+
+    function initializeSceneDropdown() {
+      sceneSelect.innerHTML = '';
+      availableScenes.forEach((scene) => {
+        const option = document.createElement('option');
+        option.value = scene.path;
+        option.textContent = scene.label;
+        sceneSelect.appendChild(option);
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('scene') || params.get('asset');
+      const resolvedPath = availableScenes.find((scene) => scene.id === requested || scene.path === requested)?.path
+        || availableScenes[0].path;
+      sceneSelect.value = resolvedPath;
+    }
+
+    window.addEventListener('error', (event) => {
+      appendLog(`${event.message} (${event.filename}:${event.lineno})`, 'error');
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      appendLog(`Unhandled promise: ${event.reason}`, 'error');
+    });
+
+    function setStatus(message, show = true) {
+      statusPill.textContent = message;
+      appendLog(message);
+      statusPill.classList.toggle('active', !!show);
+      if (show) {
+        clearTimeout(window.__statusTimeout);
+        window.__statusTimeout = setTimeout(() => statusPill.classList.remove('active'), 2800);
+      }
+    }
+
+    function setLoading(show) {
+      loading.classList.toggle('visible', !!show);
+    }
+
+    function teardownWalkControls() {
+      if (movementLoopId !== null) {
+        cancelAnimationFrame(movementLoopId);
+        movementLoopId = null;
+      }
+
+      moveState.forward = false;
+      moveState.backward = false;
+      moveState.left = false;
+      moveState.right = false;
+      moveState.up = false;
+      moveState.down = false;
+      moveState.sprint = false;
+      moveVelocity.set(0, 0, 0);
+
+      if (walkControls && typeof walkControls.disconnect === 'function') {
+        walkControls.disconnect();
+      }
+      if (walkControls && walkControls.domElement) {
+        walkControls.domElement.removeEventListener('click', requestPointerLockOnCanvas);
+        walkControls.domElement.removeEventListener('pointerdown', onManualLookDown);
+        walkControls.domElement.removeEventListener('pointermove', onManualLookMove);
+        walkControls.domElement.removeEventListener('pointerup', onManualLookUp);
+        walkControls.domElement.removeEventListener('pointerleave', onManualLookUp);
+      }
+
+      walkControls = null;
+      controlCamera = null;
+      controlElement = null;
+      pointerLocked = false;
+      movementClock = null;
+
+      document.removeEventListener('pointerlockchange', onPointerLockChange);
+      document.removeEventListener('pointerlockerror', onPointerLockError);
+
+      if (movementKeydownHandler) {
+        window.removeEventListener('keydown', movementKeydownHandler);
+      movementKeydownHandler = null;
+      }
+      if (movementKeyupHandler) {
+        window.removeEventListener('keyup', movementKeyupHandler);
+        movementKeyupHandler = null;
+      }
+      isManualLookActive = false;
+    }
+
+    let movementKeydownHandler = null;
+    let movementKeyupHandler = null;
+
+    function requestPointerLockOnCanvas() {
+      if (!walkControls) {
+        return;
+      }
+      walkControls.lock();
+    }
+
+    function onPointerLockChange() {
+      if (!walkControls) {
+        return;
+      }
+      pointerLocked = document.pointerLockElement === controlElement;
+      walkControls.isLocked = pointerLocked;
+      if (pointerLocked) {
+        appendLog('Pointer lock enabled');
+      } else {
+        appendLog('Pointer lock disabled');
+      }
+    }
+
+    function onPointerLockError() {
+      appendLog('Pointer lock failed (blocked by browser/user settings)', 'error');
+    }
+
+    function onManualLookDown(event) {
+      if (!walkControls || !controlCamera || event.button !== 0) {
+        return;
+      }
+      isManualLookActive = true;
+      lastLookPointer.x = event.clientX;
+      lastLookPointer.y = event.clientY;
+      event.preventDefault();
+      if (!walkControls.isLocked && !document.pointerLockElement) {
+        walkControls.lock();
+      }
+      if (!walkControls.isLocked && !document.pointerLockElement) {
+        appendLog('Manual look active. Drag mouse to rotate; click to lock for raw-look mode.');
+      }
+    }
+
+    function onManualLookMove(event) {
+      if (!walkControls || !controlCamera || walkControls.isLocked) {
+        return;
+      }
+      if (!isManualLookActive) {
+        isManualLookActive = true;
+        lastLookPointer.x = event.clientX;
+        lastLookPointer.y = event.clientY;
+        return;
+      }
+      const dx = event.clientX - lastLookPointer.x;
+      const dy = event.clientY - lastLookPointer.y;
+      lastLookPointer.x = event.clientX;
+      lastLookPointer.y = event.clientY;
+
+      controlCamera.rotation.order = 'YXZ';
+      controlCamera.rotation.y -= dx * walkSpeedSettings.rotationSpeed;
+      controlCamera.rotation.x -= dy * walkSpeedSettings.rotationSpeed;
+      controlCamera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, controlCamera.rotation.x));
+    }
+
+    function onManualLookUp() {
+      isManualLookActive = false;
+    }
+
+    function getSceneIdFromPath(pathOrUrl) {
+      const normalizedPath = `${pathOrUrl || ''}`.toLowerCase().split('?')[0].split('#')[0];
+      const matched = availableScenes.find((scene) => normalizedPath.includes(scene.id) || normalizedPath.endsWith(`${scene.path.toLowerCase()}`));
+      return matched ? matched.id : null;
+    }
+
+    async function disposeViewerSafely() {
+      if (!viewer?.dispose) {
+        viewer = null;
+        return;
+      }
+
+      try {
+        const result = viewer.dispose();
+        if (result && typeof result.then === 'function') {
+          await result;
+        }
+      } catch (error) {
+        appendLog(`Previous viewer dispose warning: ${error?.message || error}`, 'error');
+      } finally {
+        viewer = null;
+      }
+    }
+
+    function onMovementKeyDown(event) {
+      if (!walkControls) {
+        return;
+      }
+
+      const key = `${event.code}`.toLowerCase();
+      switch (`${event.code}`.toLowerCase()) {
+        case 'keyw':
+        case 'arrowup':
+          moveState.forward = true;
+          break;
+        case 'keys':
+        case 's':
+        case 'arrowdown':
+          moveState.backward = true;
+          break;
+        case 'keya':
+        case 'a':
+        case 'arrowleft':
+          moveState.left = true;
+          break;
+        case 'keyd':
+        case 'd':
+        case 'arrowright':
+          moveState.right = true;
+          break;
+        case 'space':
+          moveState.up = true;
+          break;
+        case 'keye':
+          moveState.up = true;
+          break;
+        case 'shiftleft':
+        case 'shiftright':
+          moveState.sprint = true;
+          break;
+        case 'keyq':
+          moveState.down = true;
+          break;
+        default:
+          break;
+      }
+
+      if (key.startsWith('arrow')) {
+        event.preventDefault();
+      }
+    }
+
+    function onMovementKeyUp(event) {
+      if (!walkControls) {
+        return;
+      }
+
+      const key = `${event.code}`.toLowerCase();
+      switch (key) {
+        case 'keyw':
+        case 'arrowup':
+          moveState.forward = false;
+          break;
+        case 'keys':
+        case 's':
+        case 'arrowdown':
+          moveState.backward = false;
+          break;
+        case 'keya':
+        case 'a':
+        case 'arrowleft':
+          moveState.left = false;
+          break;
+        case 'keyd':
+        case 'd':
+        case 'arrowright':
+          moveState.right = false;
+          break;
+        case 'space':
+          moveState.up = false;
+          break;
+        case 'keye':
+          moveState.up = false;
+          break;
+        case 'shiftleft':
+        case 'shiftright':
+          moveState.sprint = false;
+          break;
+        case 'keyq':
+          moveState.down = false;
+          break;
+        default:
+          break;
+      }
+
+      if (key.startsWith('arrow')) {
+        event.preventDefault();
+      }
+    }
+
+    function setupWalkaroundControls(viewerInstance) {
+      const renderRoot = viewerInstance?.renderer?.domElement || viewerInstance?.domElement?.querySelector('canvas');
+      const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera || viewerInstance?.scene?.camera;
+      if (!renderRoot || !camera) {
+        appendLog('Walkaround controls unavailable: missing camera or renderer target', 'error');
+        return;
+      }
+
+      controlElement = renderRoot;
+      walkControls = new PointerLockControls(camera, renderRoot);
+      controlCamera = walkControls.getObject();
+      moveVelocity.set(0, 0, 0);
+      moveDirection.set(0, 0, 0);
+      previousFrameTime = performance.now();
+
+      if (renderRoot) {
+        renderRoot.style.touchAction = 'none';
+        renderRoot.style.cursor = 'crosshair';
+        renderRoot.addEventListener('click', requestPointerLockOnCanvas);
+        renderRoot.addEventListener('pointerdown', onManualLookDown);
+        renderRoot.addEventListener('pointermove', onManualLookMove);
+        renderRoot.addEventListener('pointerup', onManualLookUp);
+        renderRoot.addEventListener('pointerleave', onManualLookUp);
+      }
+
+      const viewerControlAdapter = {
+        object: walkControls.getObject(),
+        getObject: () => walkControls.getObject(),
+        enabled: true,
+        update: () => {}
+      };
+
+      viewerInstance.controls = viewerControlAdapter;
+      movementClock = new THREE.Clock();
+      document.addEventListener('pointerlockchange', onPointerLockChange);
+      document.addEventListener('pointerlockerror', onPointerLockError);
+
+      if (!movementKeydownHandler) {
+        movementKeydownHandler = onMovementKeyDown;
+        movementKeyupHandler = onMovementKeyUp;
+        window.addEventListener('keydown', movementKeydownHandler);
+        window.addEventListener('keyup', movementKeyupHandler);
+      }
+
+    const walkVelocity = walkSpeedSettings.walkVelocity;
+    const damping = walkSpeedSettings.damping;
+    const verticalSpeed = walkSpeedSettings.verticalSpeed;
+    const sprintMultiplier = walkSpeedSettings.sprintMultiplier;
+
+      const tick = () => {
+        if (!walkControls || !movementClock) {
+          movementLoopId = null;
+          return;
+        }
+
+        const now = performance.now();
+        const delta = Math.min(0.1, (now - previousFrameTime) / 1000);
+        previousFrameTime = now;
+
+        if (walkControls) {
+          moveDirection.x = Number(moveState.right) - Number(moveState.left);
+          moveDirection.z = Number(moveState.forward) - Number(moveState.backward);
+          moveDirection.y = 0;
+          moveDirection.normalize();
+
+          const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
+          if (moveDirection.z !== 0) {
+            moveVelocity.z -= moveDirection.z * speed * damping * delta;
+          } else {
+            moveVelocity.z -= moveVelocity.z * 10.0 * delta;
+          }
+
+          if (moveDirection.x !== 0) {
+            moveVelocity.x -= moveDirection.x * speed * damping * delta;
+          } else {
+            moveVelocity.x -= moveVelocity.x * 10.0 * delta;
+          }
+
+          walkControls.moveRight(-moveVelocity.x * delta);
+          walkControls.moveForward(-moveVelocity.z * delta);
+
+          if (moveState.up) {
+            controlCamera.position.y += verticalSpeed * speed * delta * 0.2;
+          }
+          if (moveState.down) {
+            controlCamera.position.y -= verticalSpeed * speed * delta * 0.2;
+          }
+        }
+
+        movementLoopId = requestAnimationFrame(tick);
+      };
+
+      tick();
+      appendLog('Walkaround controls initialized. Click inside viewer to lock mouse and look around.');
+    }
+
+    const resolveAssetPath = (path) => new URL(path, window.location.href).toString();
+
+    function detectFormatByPath(pathOrName) {
+      const cleaned = `${pathOrName || ''}`.toLowerCase().split('?')[0].split('#')[0];
+      if (cleaned.endsWith('.ply')) {
+        return 2; // SceneFormat.Ply
+      }
+      if (cleaned.endsWith('.splat')) {
+        return 0; // SceneFormat.Splat
+      }
+      if (cleaned.endsWith('.ksplat')) {
+        return 1; // SceneFormat.KSplat
+      }
+      if (cleaned.endsWith('.spz')) {
+        return 3; // SceneFormat.Spz
+      }
+      return undefined;
+    }
+
+    function formatToName(format) {
+      return format === 2 ? 'PLY'
+        : format === 0 ? 'SPLAT'
+        : format === 1 ? 'KSPLAT'
+        : format === 3 ? 'SPZ'
+        : 'AUTO';
+    }
+
+    async function logSceneMetadata(pathOrUrl) {
+      if (!pathOrUrl || `${pathOrUrl}`.startsWith('blob:')) {
+        return;
+      }
+      try {
+        const response = await fetch(pathOrUrl, { method: 'HEAD' });
+        const sizeHeader = response?.headers?.get('content-length');
+        const contentType = response?.headers?.get('content-type') || 'unknown';
+        if (response && response.ok) {
+          appendLog(`Scene metadata: ${new URL(pathOrUrl, window.location.href).pathname} size=${sizeHeader || 'unknown'} bytes, type=${contentType}`);
+        } else {
+          appendLog(`Scene metadata unavailable: ${response ? `${response.status} ${response.statusText}` : 'no response'}`, 'error');
+        }
+      } catch (error) {
+        appendLog(`Scene metadata read error: ${error?.message || error}`, 'error');
+      }
+    }
+
+    async function ensureViewer() {
+      teardownWalkControls();
+      await disposeViewerSafely();
+
+      viewerHost.innerHTML = '';
+
+      viewer = new GaussianSplats3D.Viewer({
+        rootElement: viewerHost,
+        useBuiltInControls: false,
+        sphericalHarmonicsDegree: 0,
+        gpuAcceleratedSort: false,
+        ignoreDevicePixelRatio: false,
+        dynamicScene: false,
+        sceneRevealMode: GaussianSplats3D.SceneRevealMode.Instant,
+        renderMode: GaussianSplats3D.RenderMode.Always,
+        antialiased: false,
+        focalAdjustment: 1,
+        enableOptionalEffects: false,
+        background: 0x0b0f17,
+        initialCameraPosition: [0, 1.4, 6],
+        initialCameraLookAt: [0, 1.2, 0],
+        cameraUp: [0, 1, 0],
+        sharedMemoryForWorkers: false,
+        webXRMode: GaussianSplats3D.WebXRMode.None
+      });
+      setupWalkaroundControls(viewer);
+
+      const viewerNode = viewer.rootElement || viewer.renderer?.domElement || viewer.domElement || viewer.element;
+      if (viewerNode) {
+        viewerNode.classList?.add('vrestate-viewer-root');
+        viewerNode.style.position = 'absolute';
+        viewerNode.style.inset = '0';
+        viewerNode.style.width = '100%';
+        viewerNode.style.height = '100%';
+        const canAttach = viewerNode !== viewerHost && !viewerHost.contains(viewerNode);
+        const doesContainHost = viewerNode.contains(viewerHost);
+        if (canAttach && !doesContainHost && !viewerNode.parentElement) {
+          try {
+            viewerHost.appendChild(viewerNode);
+          } catch (error) {
+            appendLog(`Viewer node attach warning: ${error?.message || error}`, 'error');
+          }
+        }
+        appendLog(`Viewer node mounted (${viewerNode.tagName || 'element'})`);
+      }
+      appendLog(`Viewer created. useBuiltInControls=${viewer.useBuiltInControls}`);
+      toggleTooltip.textContent = 'Walkaround';
+      toggleIcon.src = './Assets/freewalk-icon.png';
+    }
+
+    async function loadSplat(pathOrUrl, forcedFormat = undefined) {
+      if (!pathOrUrl) {
+        setStatus('No path was provided', true);
+        return;
+      }
+
+      const isTempObjectUrl = `${pathOrUrl}`.startsWith('blob:');
+      const detectedFormat = forcedFormat || detectFormatByPath(pathOrUrl);
+      appendLog(`Start load: ${pathOrUrl}`);
+      appendLog(`Requested format: ${formatToName(detectedFormat)}`);
+      await logSceneMetadata(pathOrUrl);
+      const selectedSceneId = getSceneIdFromPath(pathOrUrl);
+      setLoading(true);
+      setStatus(`Loading ${pathOrUrl}...`, true);
+      let lastProgress = -1;
+
+      try {
+        await ensureViewer();
+        await viewer.addSplatScene(pathOrUrl, {
+          showLoadingUI: false,
+          splatAlphaRemovalThreshold: 0,
+          progressiveLoad: false,
+          format: detectedFormat,
+          rotation: [0, 0, 1, 0],
+          onProgress: (percentComplete, percentCompleteLabel, loaderStatus) => {
+            const rounded = Math.floor(Number(percentComplete || 0) / 10) * 10;
+            if (rounded !== lastProgress) {
+              lastProgress = rounded;
+              appendLog(`Load ${loaderStatus || 'progress'}: ${rounded}% ${percentCompleteLabel ? `(${percentCompleteLabel})` : ''}`.trim());
+            }
+          }
+        });
+        if (viewer.start) {
+          viewer.start();
+        }
+        requestAnimationFrame(() => {
+          applyScenePreset(viewer?.renderer?.camera || viewer?.camera, sceneCameraPresets[selectedSceneId]);
+        });
+        appendLog(`Scene ready. URL=${pathOrUrl} nodes=${viewer?.splatMesh?.scenes?.length || 0}`);
+        setStatus(`Loaded: ${pathOrUrl}`);
+      } catch (error) {
+        const message = error?.message || String(error);
+        const boundsMatch = /Start offset\s+(\d+)\s+is outside the bounds of the buffer/i.exec(message);
+        if (boundsMatch) {
+          appendLog(`Bounds parse failure: file offset ${boundsMatch[1]} exceeds available buffer length. This usually means the .ksplat is truncated or not matching this viewer parser version.`, 'error');
+        }
+        appendLog(`Failed to load model: ${message}`, 'error');
+        setStatus(`Failed to load model: ${message}`, true);
+        console.error(error);
+      } finally {
+        if (isTempObjectUrl && currentObjectUrl === pathOrUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+        setLoading(false);
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setStatus('Walkaround controls active');
+    });
+
+    fullScreenButton.addEventListener('click', async () => {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen().catch(() => {});
+        fullScreenTooltip.textContent = 'Exit Fullscreen';
+      } else {
+        await document.exitFullscreen().catch(() => {});
+        fullScreenTooltip.textContent = 'Fullscreen';
+      }
+    });
+
+    storySplatButton.addEventListener('click', () => {
+      const target = new URL('storysplat.html', window.location.href);
+      const selectedScene = sceneSelect.value;
+      if (selectedScene) {
+        target.searchParams.set('scene', selectedScene);
+      }
+      window.open(target.toString(), '_blank');
+    });
+
+    initializeSceneDropdown();
+    sceneSelect.addEventListener('change', () => {
+      const selected = sceneSelect.value;
+      if (!selected) {
+        return;
+      }
+      loadSplat(resolveAssetPath(selected), undefined);
+    });
+
+    const startupAsset = sceneSelect.value || startupAssetPath;
+    const resolvedStartupAsset = resolveAssetPath(startupAsset);
+    setStatus(`Auto-select: ${resolvedStartupAsset}`);
+    loadSplat(resolvedStartupAsset);
+  </script>
+</body>
+</html>
