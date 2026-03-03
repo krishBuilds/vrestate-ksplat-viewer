@@ -796,7 +796,7 @@
         }
       } catch (error) {
         const message = `${error?.message || error}`;
-        if (message.includes(\"removeChild\") && message.includes(\"not a child of this node\")) {
+        if (message.includes('removeChild') && message.includes('not a child of this node')) {
           appendLog('Previous viewer dispose finished with internal DOM warning (safe to continue).');
         } else {
           appendLog(`Previous viewer dispose warning: ${message}`, 'error');
