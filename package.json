@@ -1,0 +1,12 @@
+{
+  "name": "vrestates-local-viewer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "watch-modes": "node scripts/watch-modes.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
+
