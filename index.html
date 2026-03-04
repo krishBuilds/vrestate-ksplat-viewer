@@ -824,7 +824,7 @@
     }
 
     async function ensureColliderWorld() {
-      if (collisionLoadState === 'loaded' && movementWorld) {
+      if (colliderLoadState === 'loaded' && movementWorld) {
         return movementWorld;
       }
       if (colliderLoadPromise) {
