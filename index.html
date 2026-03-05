@@ -595,6 +595,9 @@
     let playerMoveVector = new THREE.Vector3();
     let moveDirectionWorld = new THREE.Vector3();
     const computedSceneCenterPresets = new Map();
+    const usePhysicsWalkaround = false;
+    const usePointerLock = false;
+    const manualLookSpeed = 0.0025;
     const walkSpeedSettings = {
       walkVelocity: 1.0,
       damping: 10.0,
@@ -603,7 +606,7 @@
     };
     const joystickMoveScale = 0.03335;
     const movementPhysicsConfig = Object.freeze({
-      gravity: [0, -9.82, 0],
+      gravity: [0, 0, 0],
       playerRadius: 0.35,
       playerHeight: 1.05,
       playerMass: 70,
@@ -1465,6 +1468,8 @@
     let dragLookMouseMoveHandler = null;
     let dragLookMouseUpHandler = null;
     let dragLookActive = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
     let dragMoveLogTimestamp = 0;
     let joystickManager = null;
     let movePadBound = false;
@@ -1710,34 +1715,80 @@
       previousFrameTime = performance.now();
       moveDirectionWorld.set(0, 0, 0);
       syncMovementBodyToCamera();
-      const pointerLockControls = new PointerLockControls(camera, renderRoot);
-      walkControls = pointerLockControls;
+      if (usePointerLock) {
+        walkControls = new PointerLockControls(camera, renderRoot);
+      } else {
+        walkControls = {
+          object: controlCamera,
+          getObject: () => controlCamera,
+          isLocked: false,
+          lock: () => {},
+          unlock: () => {},
+          dispose: () => {},
+          target: new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position),
+          update: () => {}
+        };
+      }
 
       if (renderRoot) {
         renderRoot.style.touchAction = 'none';
         renderRoot.style.cursor = 'grab';
-        if (!requestPointerLockHandler) {
-          requestPointerLockHandler = (event) => {
-            if (event && event.button !== undefined && event.button !== 0) {
-              return;
-            }
-            if (!walkControls) {
-              return;
-            }
-            if (walkControls?.lock) {
+        if (usePointerLock) {
+          if (!requestPointerLockHandler) {
+            requestPointerLockHandler = (event) => {
+              if (event && event.button !== undefined && event.button !== 0) {
+                return;
+              }
+              if (!walkControls?.lock) {
+                return;
+              }
               walkControls.lock();
               appendLog('Pointer lock requested. Move mouse to look around.');
               event.preventDefault();
-            }
-          };
+            };
+          }
+        } else if (requestPointerLockHandler) {
+          requestPointerLockHandler = null;
         }
         if (!dragLookMouseDownHandler) {
           dragLookMouseDownHandler = (event) => {
-            if (!walkControls?.isLocked) {
+            if (event?.button !== 0) {
               return;
             }
             dragLookActive = true;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+            controlElement.style.cursor = 'grabbing';
             renderRoot.style.cursor = 'grabbing';
+          };
+        }
+        if (!dragLookMouseMoveHandler) {
+          dragLookMouseMoveHandler = (event) => {
+            if (!dragLookActive || !walkControls || !controlCamera) {
+              return;
+            }
+            const deltaX = Number.isFinite(event.movementX) ? event.movementX : event.clientX - lastMouseX;
+            const deltaY = Number.isFinite(event.movementY) ? event.movementY : event.clientY - lastMouseY;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+            if (deltaX === 0 && deltaY === 0) {
+              return;
+            }
+            if (usePointerLock) {
+              return;
+            }
+
+            const cameraEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+            cameraEuler.setFromQuaternion(controlCamera.quaternion);
+            cameraEuler.y -= deltaX * manualLookSpeed;
+            cameraEuler.x -= deltaY * manualLookSpeed;
+            cameraEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraEuler.x));
+            controlCamera.quaternion.setFromEuler(cameraEuler);
+
+            if (walkControls.target) {
+              const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion);
+              walkControls.target.copy(controlCamera.position).add(forward);
+            }
           };
         }
         if (!dragLookMouseUpHandler) {
@@ -1749,10 +1800,14 @@
             renderRoot.style.cursor = 'grab';
           };
         }
-        renderRoot.addEventListener('click', requestPointerLockHandler, { passive: false });
+        if (usePointerLock && requestPointerLockHandler) {
+          renderRoot.addEventListener('click', requestPointerLockHandler, { passive: false });
+        }
         renderRoot.addEventListener('mousedown', dragLookMouseDownHandler, { passive: true });
+        renderRoot.addEventListener('mousemove', dragLookMouseMoveHandler, { passive: true });
         renderRoot.addEventListener('mouseup', dragLookMouseUpHandler, { passive: true });
         renderRoot.addEventListener('mouseleave', dragLookMouseUpHandler, { passive: true });
+        renderRoot.addEventListener('contextmenu', (event) => event.preventDefault(), { passive: false });
       }
 
       const viewerControlAdapter = {
@@ -1763,7 +1818,7 @@
           if (!walkControls) {
             return;
           }
-          if (walkControls?.update) {
+          if (walkControls && walkControls?.update) {
             walkControls.update();
           }
         }
@@ -1771,8 +1826,10 @@
 
       viewerInstance.controls = viewerControlAdapter;
       movementClock = new THREE.Clock();
-      document.addEventListener('pointerlockchange', onPointerLockChange);
-      document.addEventListener('pointerlockerror', onPointerLockError);
+      if (usePointerLock) {
+        document.addEventListener('pointerlockchange', onPointerLockChange);
+        document.addEventListener('pointerlockerror', onPointerLockError);
+      }
 
       if (!movementKeydownHandler) {
         movementKeydownHandler = onMovementKeyDown;
@@ -1804,7 +1861,7 @@
           moveDirection.clampLength(0, 1);
           moveDirection.normalize();
 
-          if (movementWorld && movementBody && movementPhysicsEnabled) {
+          if (usePhysicsWalkaround && movementWorld && movementBody && movementPhysicsEnabled) {
             moveWithPhysics(delta, walkVelocity * (movementPhysicsConfig.playerSpeed / 3), movementPhysicsConfig.sprintMultiplier);
           } else {
             const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
@@ -1860,8 +1917,12 @@
       };
 
       tick();
-      appendLog('Walkaround controls initialized. Click viewer to lock pointer, move mouse to look.');
-      appendLog('Walkaround listeners attached: pointer lock + WASD movement.');
+      appendLog(usePointerLock
+        ? 'Walkaround controls initialized. Click viewer to lock pointer, move mouse to look.'
+        : 'Walkaround controls initialized. Click+drag to look, WASD to move.');
+      appendLog(usePointerLock
+        ? 'Walkaround listeners attached: pointer lock + WASD movement.'
+        : 'Walkaround listeners attached: drag look + WASD movement.');
     }
 
     const resolveAssetPath = (path) => new URL(path, window.location.href).toString();
@@ -1940,7 +2001,11 @@
         sharedMemoryForWorkers: false,
         webXRMode: GaussianSplats3D.WebXRMode.None
       });
-      await initializeMovementPhysics();
+      if (usePhysicsWalkaround) {
+        await initializeMovementPhysics();
+      } else {
+        destroyMovementWorld();
+      }
       setupWalkaroundControls(viewer);
       if (controlCamera && sceneCameraPreset?.position?.length === 3) {
         controlCamera.position.set(...sceneCameraPreset.position);
