@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VR Estate Viewings · Local Viewer</title>
+  <title>VR Estate Viewings - Local Viewer</title>
   <script type="importmap">
     {
       "imports": {
@@ -80,10 +80,10 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
+      z-index: 0;
       margin: 0;
       overflow: hidden;
-      pointer-events: auto;
+      pointer-events: none;
     }
 
     #viewer-container canvas {
@@ -91,7 +91,8 @@
     }
 
     #viewer-container {
-      z-index: 0;
+      z-index: 1;
+      pointer-events: auto;
     }
 
     #loading-overlay {
@@ -116,12 +117,15 @@
     }
 
     #earth-loader {
-      width: 110px;
-      height: 110px;
+      width: 160px;
+      height: 160px;
       border-radius: 50%;
-      border: 2px solid rgba(180, 216, 255, 0.35);
-      box-shadow: 0 0 26px rgba(88, 167, 255, 0.4), inset 0 0 20px rgba(8, 30, 60, 0.8);
-      background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.24), transparent 65%);
+      border: 2px solid rgba(180, 216, 255, 0.45);
+      box-shadow: 0 0 28px rgba(88, 167, 255, 0.45), inset 0 0 24px rgba(4, 24, 44, 0.9);
+      background:
+        radial-gradient(circle at 25% 22%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 18%, transparent 32%),
+        radial-gradient(circle at 55% 70%, #4f8fc7 0%, #0e3f6f 46%, #09294c 72%, #021423 100%),
+        linear-gradient(125deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0) 55%);
       overflow: hidden;
       position: relative;
     }
@@ -129,12 +133,25 @@
     #earth-loader::before {
       content: "";
       position: absolute;
-      inset: 0;
+      inset: 6px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      border-top-color: rgba(80, 200, 255, 0.7);
-      border-right-color: rgba(255, 255, 255, 0.05);
+      border: 10px solid rgba(255, 255, 255, 0.22);
+      border-top-color: rgba(80, 210, 255, 0.85);
+      border-right-color: rgba(8, 16, 31, 0.25);
       animation: loading-ring 1.4s linear infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 48%),
+        radial-gradient(circle at 70% 65%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 45%);
+      opacity: 0.75;
+      animation: loading-ring 2.3s linear infinite reverse;
       pointer-events: none;
     }
 
@@ -199,6 +216,91 @@
       color: #111;
     }
 
+    #scene-thumbs {
+      position: fixed;
+      top: 122px;
+      left: 20px;
+      z-index: 1002;
+      width: 190px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+      pointer-events: auto;
+      padding-right: 6px;
+    }
+
+    #scene-thumbs::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .scene-thumb-item {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .scene-thumb-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .scene-thumb-item.active {
+      border-color: #62a7ff;
+      box-shadow: 0 0 0 1px rgba(98, 167, 255, 0.7);
+    }
+
+    .scene-thumb-item:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    .scene-thumb-image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: block;
+      object-fit: cover;
+      background: linear-gradient(140deg, #1a2432 0%, #0a0a0f 100%);
+    }
+
+    .scene-thumb-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 6px 8px;
+      font-size: 12px;
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    #save-start-button {
+      position: fixed;
+      top: 74px;
+      left: 320px;
+      z-index: 1002;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+    }
+
+    #save-start-button:hover {
+      background: rgba(0, 0, 0, 0.93);
+    }
+
     #toggle-button,
     #fullscreen-button {
       position: fixed;
@@ -224,44 +326,6 @@
     #toggle-button:hover,
     #fullscreen-button:hover {
       transform: scale(1.1);
-    }
-
-    #alt-viewer-button {
-      position: fixed;
-      top: 74px;
-      right: 20px;
-      z-index: 1002;
-      border: none;
-      border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 12px;
-      color: #fff;
-      background: rgba(255, 255, 255, 0.16);
-      cursor: pointer;
-      transition: background-color 0.25s ease;
-    }
-
-    #alt-viewer-button:hover {
-      background: rgba(0, 0, 0, 0.93);
-    }
-
-    #alt-viewer-button {
-      position: fixed;
-      top: 74px;
-      right: 164px;
-      z-index: 1002;
-      border: none;
-      border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 12px;
-      color: #fff;
-      background: rgba(255, 255, 255, 0.16);
-      cursor: pointer;
-      transition: background-color 0.25s ease;
-    }
-
-    #alt-viewer-button:hover {
-      background: rgba(0, 0, 0, 0.93);
     }
 
     #toggle-icon,
@@ -292,12 +356,121 @@
       opacity: 1;
     }
 
+    #move-pad {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1001;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, rgba(10, 10, 10, 0.26) 0 34px, rgba(10, 10, 10, 0.72) 35px 100%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.38), inset 0 0 18px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+      user-select: none;
+      pointer-events: auto;
+    }
+
+    #move-pad .move-button {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: #f7fbff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 0;
+      font-weight: 700;
+      letter-spacing: 0;
+      cursor: pointer;
+      transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #move-pad .move-button:active,
+    #move-pad .move-button.is-active {
+      background: rgba(255, 255, 255, 0.28);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: scale(0.95);
+    }
+
+    #move-pad .move-button[data-move="forward"] {
+      left: 45px;
+      top: 6px;
+    }
+
+    #move-pad .move-button[data-move="left"] {
+      left: 6px;
+      top: 45px;
+    }
+
+    #move-pad .move-button[data-move="right"] {
+      left: 84px;
+      top: 45px;
+    }
+
+    #move-pad .move-button[data-move="backward"] {
+      left: 45px;
+      top: 84px;
+    }
+
+    #move-pad .move-pad-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      #move-pad {
+        width: 126px;
+        height: 126px;
+      }
+
+      #move-pad .move-button {
+        width: 44px;
+        height: 44px;
+      }
+
+      #move-pad .move-button[data-move="forward"] {
+        left: 41px;
+        top: 4px;
+      }
+
+      #move-pad .move-button[data-move="left"] {
+        left: 4px;
+        top: 41px;
+      }
+
+      #move-pad .move-button[data-move="right"] {
+        left: 78px;
+        top: 41px;
+      }
+
+      #move-pad .move-button[data-move="backward"] {
+        left: 41px;
+        top: 78px;
+      }
+    }
+
   </style>
 </head>
 <body>
-  <a href="https://www.vrestateviewings.com" target="_blank" id="logo-button">
+  <button type="button" id="logo-button" aria-label="VR Estate local viewer">
     <img src="./Assets/logo.png" alt="VR Estate Viewings logo" />
-  </a>
+  </button>
 
   <div id="address-bar">
     <img src="./Assets/address-icon.png" alt="Address icon" />
@@ -306,13 +479,17 @@
 
   <div id="status-pill"></div>
   <div id="loading-overlay">
-    <canvas id="earth-loader" width="128" height="128" aria-label="Loading"></canvas>
+    <div id="earth-loader" role="img" aria-label="Loading"></div>
   </div>
   <div id="scene-selector">
     <label for="scene-select">Scene</label>
     <select id="scene-select"></select>
   </div>
-  <button id="alt-viewer-button">Open Direct Splat Viewer</button>
+  <div id="scene-thumbs" aria-label="Scene thumbnails"></div>
+  <button id="save-start-button" type="button">Save Start Point</button>
+  <div id="move-pad" aria-label="Movement controls">
+    <div class="move-pad-center" aria-hidden="true"></div>
+  </div>
 
   <div id="viewer-container"></div>
   <div id="nav-container"></div>
@@ -331,6 +508,9 @@
     import * as THREE from 'three';
     import * as GaussianSplats3D from 'https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/PointerLockControls.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+    import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
+    import nipplejs from 'https://cdn.jsdelivr.net/npm/nipplejs@0.10.2/+esm';
 
     const startupAssetPath = './assets/Splat/externalview.ksplat';
     const availableScenes = Object.freeze([
@@ -338,11 +518,6 @@
         id: 'externalview',
         label: 'External View',
         path: './assets/Splat/externalview.ksplat'
-      },
-      {
-        id: 'floorplan',
-        label: 'Floorplan',
-        path: './assets/Splat/floorplan.ksplat'
       },
       {
         id: 'frontyard',
@@ -364,7 +539,6 @@
     const loading = document.getElementById('loading-overlay');
     const statusPill = document.getElementById('status-pill');
     const viewerHost = document.getElementById('viewer-container');
-    const earthLoaderCanvas = document.getElementById('earth-loader');
     const toggleButton = document.getElementById('toggle-button');
     const toggleTooltip = document.getElementById('toggle-tooltip');
     const toggleIcon = document.getElementById('toggle-icon');
@@ -372,13 +546,23 @@
     const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
     const fullScreenIcon = document.getElementById('fullscreen-icon');
     const sceneSelect = document.getElementById('scene-select');
-    const altViewerButton = document.getElementById('alt-viewer-button');
+    const saveStartButton = document.getElementById('save-start-button');
+    const movePad = document.getElementById('move-pad');
+    const sceneThumbs = document.getElementById('scene-thumbs');
+    const sceneThumbnailMap = new Map();
+    const customStartStorageKey = 'vrestates.customStartPresets';
+    const userStartPresets = loadUserStartPresets();
+    const sceneThumbnailAssets = Object.freeze({
+      externalview: './assets/SceneThumbs/externalview.jpg',
+      frontyard: './assets/SceneThumbs/frontyard.jpg',
+      interior: './assets/SceneThumbs/interior.jpg',
+      backyard: './assets/SceneThumbs/backyard.jpg'
+    });
 
     let viewer;
     let currentObjectUrl = null;
     let walkControls = null;
     let controlCamera = null;
-    let isManualLookActive = false;
     let activeLoadToken = 0;
     let viewerMount = null;
     let moveState = {
@@ -392,47 +576,154 @@
     };
     let moveVelocity = new THREE.Vector3();
     let moveDirection = new THREE.Vector3();
+    const moveForwardVector = new THREE.Vector3();
+    const moveRightVector = new THREE.Vector3();
+    let analogMoveX = 0;
+    let analogMoveZ = 0;
     let previousFrameTime = performance.now();
     let pointerLocked = false;
     let movementLoopId = null;
     let movementClock = null;
     let controlElement = null;
-    let lastLookPointer = { x: 0, y: 0 };
-    const earthTextureURL = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/land_ocean_ice_cloud_2048.jpg';
-    let earthLoaderRenderer = null;
-    let earthLoaderScene = null;
-    let earthLoaderCamera = null;
-    let earthLoaderMesh = null;
-    let earthLoaderLoop = null;
+    let movementWorld = null;
+    let movementBody = null;
+    let colliderBodies = [];
+    let movementPhysicsEnabled = false;
+    let colliderLoadState = 'uninitialized';
+    let colliderLoadPromise = null;
+    let playerTargetDirection = new THREE.Vector3();
+    let playerMoveVector = new THREE.Vector3();
+    let moveDirectionWorld = new THREE.Vector3();
+    const computedSceneCenterPresets = new Map();
     const walkSpeedSettings = {
-      walkVelocity: 10.0,
+      walkVelocity: 1.0,
       damping: 10.0,
       verticalSpeed: 3.0,
-      sprintMultiplier: 2.0,
-      rotationSpeed: 0.002
+      sprintMultiplier: 2.0
     };
+    const joystickMoveScale = 0.03335;
+    const movementPhysicsConfig = Object.freeze({
+      gravity: [0, -9.82, 0],
+      playerRadius: 0.35,
+      playerHeight: 1.05,
+      playerMass: 70,
+      playerSpeed: 3,
+      sprintMultiplier: 2,
+      damping: 12,
+      stepHeight: 0.12,
+      bodyOffsetY: 0.95
+    });
+    const colliderSourceGroups = Object.freeze([
+      {
+        local: './Collider/floor.glb',
+        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/floor.glb'
+      },
+      {
+        local: './Collider/walls.glb',
+        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/walls.glb'
+      },
+      {
+        local: './Collider/collider.glb',
+        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/collider.glb'
+      }
+    ]);
     const sceneCameraPresets = Object.freeze({
       externalview: {
-        position: [0.65, 1.1, 2.2],
-        lookAt: [0, 1, 0]
+        position: [1.864132705926673, 1.0968079779294122, -2.4435707786471785],
+        lookAt: [1.3602483778956955, 0.6203221983611571, -1.7231112823297559]
       },
-      floorplan: {
-        position: [0, 1.25, 2.4],
-        lookAt: [0, 1, 0]
-      },
+      // Fallbacks for scenes that are not listed directly in the source jM array.
+      // These are pulled from transition targetPosition values in the live site's eE metadata.
       frontyard: {
-        position: [0, 0.8, 2.8],
-        lookAt: [0, 0.4, 0]
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
       },
       interior: {
-        position: [0, 1.05, 1.2],
-        lookAt: [0, 1.0, 0]
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
       },
       backyard: {
-        position: [0, 0.8, 2.6],
-        lookAt: [0, 0.3, 0]
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
       }
     });
+
+    const transitionStartMap = Object.freeze({
+      FrontToInside: {
+        from: 'frontyard',
+        to: 'interior',
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
+      },
+      InsideToFront: {
+        from: 'interior',
+        to: 'frontyard',
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
+      },
+      FrontToBack: {
+        from: 'frontyard',
+        to: 'backyard',
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
+      },
+      BackToFront: {
+        from: 'backyard',
+        to: 'frontyard',
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
+      },
+      BackToInside: {
+        from: 'backyard',
+        to: 'interior',
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
+      },
+      InsideToBack: {
+        from: 'interior',
+        to: 'backyard',
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
+      }
+    });
+
+    const transitionStartByScene = Object.freeze({
+      frontyard: {
+        interior: transitionStartMap.InsideToFront,
+        backyard: transitionStartMap.BackToFront,
+        fallback: transitionStartMap.InsideToFront
+      },
+      interior: {
+        frontyard: transitionStartMap.FrontToInside,
+        backyard: transitionStartMap.InsideToBack,
+        fallback: transitionStartMap.FrontToInside
+      },
+      backyard: {
+        frontyard: transitionStartMap.BackToFront,
+        interior: transitionStartMap.InsideToBack,
+        fallback: transitionStartMap.FrontToBack
+      }
+    });
+
+    let lastSceneId = null;
+
+    function getTransitionStartPreset(fromSceneId, toSceneId) {
+      if (!toSceneId) {
+        return null;
+      }
+      const destinationTransitions = transitionStartByScene[toSceneId];
+      if (!destinationTransitions) {
+        return null;
+      }
+      const selected = destinationTransitions[fromSceneId] || destinationTransitions.fallback;
+      if (!selected) {
+        return null;
+      }
+      return {
+        position: selected.position,
+        lookAt: selected.lookAt
+      };
+    }
 
     function applyScenePreset(camera, cameraPreset) {
       if (!camera || !cameraPreset) {
@@ -440,9 +731,274 @@
       }
       const [x, y, z] = cameraPreset.position;
       const [lx, ly, lz] = cameraPreset.lookAt;
-      camera.position.set(x, Math.max(0.3, y), z);
+      const cameraY = Number.isFinite(y) ? y : 0.3;
+      camera.position.set(x, cameraY, z);
       camera.rotation.set(0, 0, 0);
       camera.lookAt(lx, ly, lz);
+      if (walkControls?.target) {
+        walkControls.target.set(lx, ly, lz);
+        walkControls.update();
+      }
+      if (controlCamera) {
+        controlCamera.position.copy(camera.position);
+      }
+      syncMovementBodyToCamera();
+    }
+
+    function syncMovementBodyToCamera() {
+      if (!movementBody || !controlCamera) {
+        return;
+      }
+      movementBody.position.set(
+        controlCamera.position.x,
+        controlCamera.position.y - movementPhysicsConfig.bodyOffsetY,
+        controlCamera.position.z
+      );
+      movementBody.velocity.set(0, 0, 0);
+      movementBody.angularVelocity.set(0, 0, 0);
+    }
+
+    function buildTrimeshFromGeometry(geometry, worldMatrix) {
+      if (!geometry || !geometry.isBufferGeometry) {
+        return null;
+      }
+
+      const positionAttribute = geometry.getAttribute('position');
+      const indexAttribute = geometry.index;
+      if (!positionAttribute || !indexAttribute) {
+        return null;
+      }
+
+      const source = positionAttribute.array;
+      const indices = indexAttribute.array;
+      const transformed = new Float32Array(source.length);
+      const sourcePosition = new THREE.Vector3();
+      const matrix = worldMatrix || new THREE.Matrix4();
+      const totalVertices = source.length / 3;
+      for (let i = 0; i < totalVertices; i += 1) {
+        sourcePosition.fromArray(source, i * 3).applyMatrix4(matrix);
+        transformed[i * 3] = sourcePosition.x;
+        transformed[i * 3 + 1] = sourcePosition.y;
+        transformed[i * 3 + 2] = sourcePosition.z;
+      }
+      return { triMesh: new CANNON.Trimesh(Array.from(transformed), Array.from(indices)), count: totalVertices };
+    }
+
+    function destroyMovementWorld() {
+      if (movementWorld) {
+        for (const body of movementWorld.bodies.slice()) {
+          movementWorld.removeBody(body);
+        }
+      }
+      movementBody = null;
+      colliderBodies = [];
+      movementWorld = null;
+      movementPhysicsEnabled = false;
+      colliderLoadState = 'uninitialized';
+    }
+
+    async function loadColliderMesh(url, world) {
+      const loader = new GLTFLoader();
+      const resolved = new URL(url, window.location.href).toString();
+      appendLog(`Loading collider: ${resolved}`);
+      const gltf = await loader.loadAsync(resolved);
+      if (!gltf?.scene) {
+        return false;
+      }
+      gltf.scene.updateMatrixWorld(true);
+      let meshAdded = false;
+      gltf.scene?.traverse((object) => {
+        if (!object?.isMesh || !object.geometry) {
+          return;
+        }
+        const trimesh = buildTrimeshFromGeometry(object.geometry, object.matrixWorld);
+        if (!trimesh?.triMesh) {
+          return;
+        }
+        const body = new CANNON.Body({ mass: 0, shape: trimesh.triMesh });
+        world.addBody(body);
+        colliderBodies.push(body);
+        meshAdded = true;
+      });
+      return meshAdded;
+    }
+
+    async function ensureColliderWorld() {
+      if (collisionLoadState === 'loaded' && movementWorld) {
+        return movementWorld;
+      }
+      if (colliderLoadPromise) {
+        return colliderLoadPromise;
+      }
+      if (!movementWorld) {
+        const world = new CANNON.World({
+          gravity: new CANNON.Vec3(...movementPhysicsConfig.gravity)
+        });
+        world.broadphase = new CANNON.NaiveBroadphase();
+        world.solver.iterations = 12;
+        world.solver.tolerance = 0.001;
+        movementWorld = world;
+      }
+      const world = movementWorld;
+
+      colliderLoadPromise = (async () => {
+        let loadedAny = false;
+        for (const entry of colliderSourceGroups) {
+          const options = [entry.local, entry.remote];
+          let loaded = false;
+          for (const candidate of options) {
+            try {
+              const hadAny = await loadColliderMesh(candidate, world);
+              if (hadAny) {
+                loadedAny = true;
+                loaded = true;
+                break;
+              }
+            } catch (error) {
+              appendLog(`Collider load failed (${candidate}): ${error?.message || error}`, 'error');
+            }
+          }
+          if (!loaded) {
+            appendLog(`Collider unavailable for ${entry.local}`, 'error');
+          }
+        }
+        if (!loadedAny) {
+          appendLog('No collider assets were loaded. Movement will be unbounded.', 'error');
+          colliderLoadState = 'missing';
+          movementPhysicsEnabled = false;
+          return null;
+        }
+        colliderLoadState = 'loaded';
+        return world;
+      })().finally(() => {
+        colliderLoadPromise = null;
+      });
+
+      return colliderLoadPromise;
+    }
+
+    async function initializeMovementPhysics() {
+      if (movementPhysicsEnabled && movementWorld && movementBody) {
+        return true;
+      }
+
+      destroyMovementWorld();
+
+      const world = await ensureColliderWorld();
+      if (!world) {
+        return false;
+      }
+
+      movementBody = new CANNON.Body({
+        mass: movementPhysicsConfig.playerMass,
+        position: new CANNON.Vec3(0, 2, 0),
+        shape: new CANNON.Sphere(movementPhysicsConfig.playerRadius),
+        material: new CANNON.Material('player'),
+        linearDamping: 0.7,
+        fixedRotation: true
+      });
+      movementBody.angularDamping = 1;
+      movementBody.updateMassProperties();
+      world.addBody(movementBody);
+      movementPhysicsEnabled = true;
+      appendLog(`Movement physics ready. colliderLoadState=${colliderLoadState}`);
+      return true;
+    }
+
+    function moveWithPhysics(delta, walkVelocity, sprintMultiplier) {
+      if (!movementWorld || !movementBody) {
+        return;
+      }
+
+      const targetMove = moveDirectionWorld.set(
+        Number(moveState.right) - Number(moveState.left) + (analogMoveX * joystickMoveScale),
+        0,
+        Number(moveState.forward) - Number(moveState.backward) + (analogMoveZ * joystickMoveScale)
+      );
+
+      if (targetMove.lengthSq() < 1e-5) {
+        const damp = Math.max(1, movementPhysicsConfig.damping);
+        movementBody.velocity.x *= Math.exp(-damp * delta);
+        movementBody.velocity.z *= Math.exp(-damp * delta);
+      } else {
+        targetMove.normalize();
+
+        if (controlCamera) {
+          controlCamera.getWorldDirection(playerTargetDirection);
+          playerTargetDirection.y = 0;
+          if (playerTargetDirection.lengthSq() < 1e-5) {
+            playerTargetDirection.set(0, 0, -1);
+          }
+          playerTargetDirection.normalize();
+          playerWorldVector.crossVectors(controlCamera.up, playerTargetDirection).normalize();
+          playerMoveVector.copy(playerTargetDirection).multiplyScalar(targetMove.z).addScaledVector(playerWorldVector, targetMove.x);
+        } else {
+          playerMoveVector.copy(targetMove);
+        }
+
+        if (playerMoveVector.lengthSq() > 1e-5) {
+          playerMoveVector.normalize();
+          const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
+          movementBody.velocity.x = playerMoveVector.x * speed;
+          movementBody.velocity.z = playerMoveVector.z * speed;
+        } else {
+          movementBody.velocity.x = 0;
+          movementBody.velocity.z = 0;
+        }
+      }
+
+      movementBody.velocity.y = 0;
+      movementBody.angularVelocity.set(0, 0, 0);
+      worldStep(delta);
+      syncCameraFromBody();
+    }
+
+    function worldStep(delta) {
+      if (!movementWorld) {
+        return;
+      }
+      if (delta <= 0) {
+        return;
+      }
+      const safeDelta = Math.min(Math.max(delta, 0.001), 1 / 30);
+      movementWorld.step(1 / 60, safeDelta, 10);
+    }
+
+    function syncCameraFromBody() {
+      if (!controlCamera || !movementBody) {
+        return;
+      }
+      controlCamera.position.set(
+        movementBody.position.x,
+        movementBody.position.y + movementPhysicsConfig.bodyOffsetY,
+        movementBody.position.z
+      );
+      if (walkControls?.target) {
+        playerWorldVector.set(0, 0, -1).applyQuaternion(controlCamera.quaternion);
+        walkControls.target.copy(controlCamera.position).add(playerWorldVector);
+      }
+    }
+
+    function buildCenterCameraPreset(bounds) {
+      if (!bounds) {
+        return null;
+      }
+
+      const width = bounds.max.x - bounds.min.x;
+      const height = bounds.max.y - bounds.min.y;
+      const depth = bounds.max.z - bounds.min.z;
+      const radius = Math.max(width, height, depth, 1);
+      const distance = Math.max(radius * 1.8, 1.0);
+      const angleOffset = 0.6;
+
+      return {
+        position: [
+          bounds.center.x + distance * Math.sin(angleOffset),
+          bounds.center.y + distance * 0.25,
+          bounds.center.z + distance * Math.cos(angleOffset)
+        ],
+        lookAt: [bounds.center.x, bounds.center.y, bounds.center.z]
+      };
     }
 
     function getArrayBounds(values) {
@@ -487,55 +1043,201 @@
       if (!viewerInstance) {
         return null;
       }
-      const mesh = viewerInstance.splatMesh || viewerInstance.scene?.splatMesh || viewerInstance.mesh;
-      if (!mesh) {
+
+      if (viewerInstance.splatMesh && typeof viewerInstance.splatMesh.computeBoundingBox === 'function') {
+        try {
+          const computedBounds = viewerInstance.splatMesh.computeBoundingBox(true);
+          if (computedBounds?.min && computedBounds?.max &&
+            [computedBounds.min.x, computedBounds.min.y, computedBounds.min.z, computedBounds.max.x, computedBounds.max.y, computedBounds.max.z].every(Number.isFinite)) {
+            return {
+              min: computedBounds.min.clone(),
+              max: computedBounds.max.clone(),
+              center: computedBounds.getCenter(new THREE.Vector3())
+            };
+          }
+        } catch (error) {
+          appendLog(`SplatMesh computeBoundingBox failed: ${error?.message || error}`, 'error');
+        }
+      }
+
+      const tryMesh = (mesh) => {
+        if (!mesh) {
+          return null;
+        }
+        const positionAttribute = mesh?.geometry?.attributes?.position;
+        const positions = positionAttribute?.array || mesh?.geometry?.getAttribute?.('position')?.array;
+        if (positions) {
+          const bounds = getArrayBounds(positions);
+          if (bounds) {
+            return bounds;
+          }
+        }
+
+        if (mesh.geometry?.boundingBox) {
+          const min = mesh.geometry.boundingBox.min;
+          const max = mesh.geometry.boundingBox.max;
+          if (min && max && [min.x, min.y, min.z, max.x, max.y, max.z].every(Number.isFinite)) {
+            return {
+              min: min.clone(),
+              max: max.clone(),
+              center: new THREE.Vector3(
+                (min.x + max.x) / 2,
+                (min.y + max.y) / 2,
+                (min.z + max.z) / 2
+              )
+            };
+          }
+        }
+
+        if (typeof mesh.geometry?.computeBoundingBox === 'function' && !mesh.geometry.boundingBox) {
+          mesh.geometry.computeBoundingBox();
+          if (mesh.geometry.boundingBox) {
+            const min = mesh.geometry.boundingBox.min;
+            const max = mesh.geometry.boundingBox.max;
+            if (min && max && [min.x, min.y, min.z, max.x, max.y, max.z].every(Number.isFinite)) {
+              return {
+                min: min.clone(),
+                max: max.clone(),
+                center: new THREE.Vector3(
+                  (min.x + max.x) / 2,
+                  (min.y + max.y) / 2,
+                  (min.z + max.z) / 2
+                )
+              };
+            }
+          }
+        }
+
+        if (mesh.geometry?.boundingSphere?.isSphere) {
+          const center = mesh.geometry.boundingSphere.center;
+          const radius = mesh.geometry.boundingSphere.radius;
+          if (center && Number.isFinite(radius) && Number.isFinite(center.x) && Number.isFinite(center.y) && Number.isFinite(center.z)) {
+            return {
+              min: new THREE.Vector3(center.x - radius, center.y - radius, center.z - radius),
+              max: new THREE.Vector3(center.x + radius, center.y + radius, center.z + radius),
+              center: center.clone()
+            };
+          }
+        }
+
         return null;
+      };
+
+      const meshesFromScenes = [];
+      const directMeshes = [
+        viewerInstance.splatMesh,
+        viewerInstance.scene?.splatMesh,
+        viewerInstance.mesh,
+        viewerInstance.scene?.mesh
+      ].filter(Boolean);
+      for (const mesh of directMeshes) {
+        const bounds = tryMesh(mesh);
+        if (bounds) {
+          return bounds;
+        }
       }
 
-      const positionAttribute = mesh?.geometry?.attributes?.position;
-      const positions = positionAttribute?.array;
-      if (positions) {
-        return getArrayBounds(positions);
+      const addSceneMeshes = viewerInstance.splatMesh?.scenes;
+      if (Array.isArray(addSceneMeshes)) {
+        for (const scene of addSceneMeshes) {
+          if (!scene || !scene.mesh) {
+            continue;
+          }
+          meshesFromScenes.push(scene.mesh);
+        }
       }
 
-      const positionsFromAttribute = mesh?.geometry?.getAttribute?.('position');
-      if (positionsFromAttribute?.array) {
-        return getArrayBounds(positionsFromAttribute.array);
+      const rootScenes = [
+        viewerInstance.scene,
+        viewerInstance.renderer?.scene
+      ].filter(Boolean);
+      for (const root of rootScenes) {
+        if (typeof root.traverse === 'function') {
+          root.traverse((obj) => {
+            if (!obj?.geometry) {
+              return;
+            }
+            const bounds = tryMesh(obj);
+            if (bounds) {
+              meshesFromScenes.push(obj);
+            }
+          });
+        }
+      }
+
+      if (meshesFromScenes.length > 0) {
+        for (const candidate of meshesFromScenes) {
+          const bounds = tryMesh(candidate);
+          if (bounds) {
+            return bounds;
+          }
+        }
       }
 
       return null;
     }
 
-    function centerCameraToScene(viewerInstance, sceneId) {
+    function centerCameraToScene(viewerInstance, sceneId, forcedPreset = null) {
       const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera;
       if (!camera) {
         return;
       }
 
-      const bounds = getLoadedSceneBounds(viewerInstance);
-      if (!bounds) {
-        applyScenePreset(camera, sceneCameraPresets[sceneId] || sceneCameraPresets.externalview);
+      if (!forcedPreset && sceneId === 'externalview' && sceneCameraPresets.externalview) {
+        appendLog(`Using fixed preset for externalview: ${JSON.stringify(sceneCameraPresets.externalview)}`);
+        applyScenePreset(camera, sceneCameraPresets.externalview);
         return;
       }
 
-      const width = bounds.max.x - bounds.min.x;
-      const height = bounds.max.y - bounds.min.y;
-      const depth = bounds.max.z - bounds.min.z;
-      const radius = Math.max(width, height, depth, 1);
-      const distance = Math.max(radius * 1.8, 1.0);
-      const angleOffset = 0.6;
+      if (forcedPreset) {
+        applyScenePreset(camera, forcedPreset);
+        return;
+      }
 
-      camera.position.set(
-        bounds.center.x + distance * Math.sin(angleOffset),
-        bounds.center.y + distance * 0.25,
-        bounds.center.z + distance * Math.cos(angleOffset)
-      );
-      camera.up.set(0, 1, 0);
-      camera.lookAt(bounds.center.x, bounds.center.y, bounds.center.z);
+      const cached = sceneId ? computedSceneCenterPresets.get(sceneId) : null;
+      if (cached) {
+        appendLog(`Using cached center start for ${sceneId}`);
+        applyScenePreset(camera, cached);
+        return;
+      }
+
+      const bounds = getLoadedSceneBounds(viewerInstance);
+      if (!bounds) {
+        if (sceneId) {
+          appendLog(`Waiting for scene bounds to compute center (${sceneId})`);
+        }
+        return;
+      }
+
+      const computedPreset = buildCenterCameraPreset(bounds);
+      if (computedPreset && sceneId) {
+        computedSceneCenterPresets.set(sceneId, computedPreset);
+        appendLog(`Computed center start for ${sceneId}: ${JSON.stringify(computedPreset)}`);
+      }
+
+      if (computedPreset) {
+        applyScenePreset(camera, computedPreset);
+        return;
+      }
 
       if (controlCamera) {
         controlCamera.position.copy(camera.position);
       }
+    }
+
+    function scheduleSceneCenter(viewerInstance, sceneId, forcedPreset, remainingAttempts = 30) {
+      const apply = () => {
+        centerCameraToScene(viewerInstance, sceneId, forcedPreset);
+        const isExternal = sceneId === 'externalview';
+        if (remainingAttempts > 0 && !isExternal && !computedSceneCenterPresets.has(sceneId) && !forcedPreset) {
+          requestAnimationFrame(() => {
+            scheduleSceneCenter(viewerInstance, sceneId, forcedPreset, remainingAttempts - 1);
+          });
+        } else if (!isExternal && remainingAttempts <= 0 && !computedSceneCenterPresets.has(sceneId) && !forcedPreset) {
+          appendLog(`Center unavailable for ${sceneId || 'unknown'} after retries.`);
+        }
+      };
+      requestAnimationFrame(apply);
     }
 
     function appendLog(message, level = 'info') {
@@ -544,6 +1246,62 @@
         return;
       }
       console.log(`[Viewer] ${message}`);
+    }
+
+    function normalizeSceneId(rawId) {
+      return `${rawId || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function setActiveSceneThumb(sceneId) {
+      if (!sceneThumbs) {
+        return;
+      }
+      const target = normalizeSceneId(sceneId);
+      sceneThumbnailMap.forEach((entry) => {
+        entry.button.classList.toggle('active', entry.sceneId === target);
+      });
+    }
+
+    function captureCurrentSceneThumbnail(rawSceneId) {
+      return;
+    }
+
+    function buildSceneThumbnails() {
+      if (!sceneThumbs || !availableScenes.length) {
+        return;
+      }
+
+      sceneThumbs.innerHTML = '';
+      sceneThumbnailMap.clear();
+      availableScenes.forEach((scene) => {
+        const sceneId = normalizeSceneId(scene.id);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'scene-thumb-item';
+        button.dataset.sceneId = sceneId;
+        button.setAttribute('aria-label', scene.label);
+
+        const image = document.createElement('img');
+        image.className = 'scene-thumb-image';
+        image.src = sceneThumbnailAssets[sceneId] || '';
+        image.alt = `${scene.label} initial shot`;
+        image.loading = 'lazy';
+
+        const label = document.createElement('div');
+        label.className = 'scene-thumb-label';
+        label.textContent = scene.label;
+
+        button.appendChild(image);
+        button.appendChild(label);
+        button.addEventListener('click', () => {
+          sceneSelect.value = scene.path;
+          loadSplat(resolveAssetPath(scene.path), undefined);
+        });
+
+        sceneThumbs.appendChild(button);
+        sceneThumbnailMap.set(sceneId, { button, image, sceneId });
+      });
+      setActiveSceneThumb(getSceneIdFromPath(sceneSelect.value) || 'externalview');
     }
 
     function initializeSceneDropdown() {
@@ -560,6 +1318,49 @@
       const resolvedPath = availableScenes.find((scene) => scene.id === requested || scene.path === requested)?.path
         || availableScenes[0].path;
       sceneSelect.value = resolvedPath;
+    }
+
+    function loadUserStartPresets() {
+      try {
+        const raw = localStorage.getItem(customStartStorageKey);
+        if (!raw) {
+          return {};
+        }
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function persistUserStartPresets() {
+      try {
+        localStorage.setItem(customStartStorageKey, JSON.stringify(userStartPresets));
+      } catch (error) {
+        appendLog(`Failed to save start presets: ${error?.message || error}`, 'error');
+      }
+    }
+
+    function saveCurrentStartPreset() {
+      if (!controlCamera) {
+        setStatus('Cannot save start point: camera not ready', true);
+        return;
+      }
+
+      const sceneId = getSceneIdFromPath(sceneSelect.value) || lastSceneId || 'externalview';
+      const lookTarget = walkControls?.target
+        ? walkControls.target.clone()
+        : controlCamera.position.clone().add(new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion));
+      const preset = {
+        position: [controlCamera.position.x, controlCamera.position.y, controlCamera.position.z],
+        lookAt: [lookTarget.x, lookTarget.y, lookTarget.z]
+      };
+
+      userStartPresets[sceneId] = preset;
+      computedSceneCenterPresets.set(sceneId, preset);
+      persistUserStartPresets();
+      appendLog(`Saved custom start for ${sceneId}: ${JSON.stringify(preset)}`);
+      setStatus(`Saved start point for ${sceneId}`);
     }
 
     window.addEventListener('error', (event) => {
@@ -580,74 +1381,8 @@
       }
     }
 
-    function initEarthLoader() {
-      if (earthLoaderRenderer || !earthLoaderCanvas) {
-        return;
-      }
-      try {
-        earthLoaderRenderer = new THREE.WebGLRenderer({
-          canvas: earthLoaderCanvas,
-          alpha: true,
-          antialias: true
-        });
-        earthLoaderRenderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-        earthLoaderRenderer.setSize(110, 110, false);
-        earthLoaderRenderer.setClearColor(0x000000, 0);
-
-        earthLoaderScene = new THREE.Scene();
-        earthLoaderCamera = new THREE.PerspectiveCamera(48, 1, 0.1, 20);
-        earthLoaderCamera.position.set(0, 0, 2.35);
-
-        const ambient = new THREE.AmbientLight(0x4b6f9a, 0.7);
-        const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-        dir.position.set(2, 1, 2);
-        earthLoaderScene.add(ambient);
-        earthLoaderScene.add(dir);
-
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.crossOrigin = 'anonymous';
-        const map = textureLoader.load(earthTextureURL);
-        const globeGeometry = new THREE.SphereGeometry(0.95, 36, 36);
-        const globeMaterial = new THREE.MeshPhongMaterial({
-          map,
-          shininess: 8,
-          specular: 0x111111
-        });
-        earthLoaderMesh = new THREE.Mesh(globeGeometry, globeMaterial);
-        earthLoaderScene.add(earthLoaderMesh);
-      } catch (error) {
-        appendLog(`Earth loader init failed: ${error?.message || error}`, 'error');
-        earthLoaderRenderer = null;
-      }
-    }
-
-    function animateEarthLoader() {
-      if (!earthLoaderRenderer || !earthLoaderScene || !earthLoaderCamera || !earthLoaderMesh) {
-        return;
-      }
-      earthLoaderMesh.rotation.y += 0.007;
-      earthLoaderMesh.rotation.x = Math.sin(performance.now() * 0.00012) * 0.04;
-      earthLoaderRenderer.render(earthLoaderScene, earthLoaderCamera);
-      earthLoaderLoop = requestAnimationFrame(animateEarthLoader);
-    }
-
-    function stopEarthLoaderLoop() {
-      if (earthLoaderLoop !== null) {
-        cancelAnimationFrame(earthLoaderLoop);
-        earthLoaderLoop = null;
-      }
-    }
-
     function setLoading(show) {
       loading.classList.toggle('visible', !!show);
-      if (show) {
-        initEarthLoader();
-        if (earthLoaderRenderer && earthLoaderLoop === null) {
-          animateEarthLoader();
-        }
-      } else {
-        stopEarthLoaderLoop();
-      }
     }
 
     function teardownWalkControls() {
@@ -665,15 +1400,31 @@
       moveState.sprint = false;
       moveVelocity.set(0, 0, 0);
 
-      if (walkControls && typeof walkControls.disconnect === 'function') {
-        walkControls.disconnect();
+      if (walkControls?.isLocked) {
+        walkControls.unlock();
       }
-      if (walkControls && walkControls.domElement) {
-        walkControls.domElement.removeEventListener('click', requestPointerLockOnCanvas);
-        walkControls.domElement.removeEventListener('pointerdown', onManualLookDown);
-        walkControls.domElement.removeEventListener('pointermove', onManualLookMove);
-        walkControls.domElement.removeEventListener('pointerup', onManualLookUp);
-        walkControls.domElement.removeEventListener('pointerleave', onManualLookUp);
+      if (walkControls && typeof walkControls.dispose === 'function') {
+        walkControls.dispose();
+      }
+      if (controlElement) {
+        if (requestPointerLockHandler) {
+          controlElement.removeEventListener('click', requestPointerLockHandler);
+          controlElement.removeEventListener('mousedown', requestPointerLockHandler);
+          controlElement.removeEventListener('pointerdown', requestPointerLockHandler);
+        }
+        if (dragLookMouseDownHandler) {
+          controlElement.removeEventListener('mousedown', dragLookMouseDownHandler);
+        }
+        if (dragLookMouseMoveHandler) {
+          controlElement.removeEventListener('mousemove', dragLookMouseMoveHandler);
+        }
+        if (dragLookMouseUpHandler) {
+          controlElement.removeEventListener('mouseup', dragLookMouseUpHandler);
+          controlElement.removeEventListener('mouseleave', dragLookMouseUpHandler);
+        }
+      }
+      if (requestPointerLockHandler) {
+        window.removeEventListener('pointerdown', requestPointerLockHandler);
       }
 
       walkControls = null;
@@ -693,18 +1444,30 @@
         window.removeEventListener('keyup', movementKeyupHandler);
         movementKeyupHandler = null;
       }
-      isManualLookActive = false;
+      if (movePadPointerUpHandler) {
+        window.removeEventListener('pointerup', movePadPointerUpHandler);
+        movePadPointerUpHandler = null;
+      }
+      clearMovePadInputs();
+      requestPointerLockHandler = null;
+      dragLookMouseDownHandler = null;
+      dragLookMouseMoveHandler = null;
+      dragLookMouseUpHandler = null;
+      dragLookActive = false;
+      destroyMovementWorld();
     }
 
     let movementKeydownHandler = null;
     let movementKeyupHandler = null;
-
-    function requestPointerLockOnCanvas() {
-      if (!walkControls) {
-        return;
-      }
-      walkControls.lock();
-    }
+    let requestPointerLockHandler = null;
+    let movePadPointerUpHandler = null;
+    let dragLookMouseDownHandler = null;
+    let dragLookMouseMoveHandler = null;
+    let dragLookMouseUpHandler = null;
+    let dragLookActive = false;
+    let dragMoveLogTimestamp = 0;
+    let joystickManager = null;
+    let movePadBound = false;
 
     function onPointerLockChange() {
       if (!walkControls) {
@@ -723,51 +1486,77 @@
       appendLog('Pointer lock failed (blocked by browser/user settings)', 'error');
     }
 
-    function onManualLookDown(event) {
-      if (!walkControls || !controlCamera || event.button !== 0) {
+    function bindMovePadControls() {
+      if (movePadBound || !movePad) {
         return;
       }
-      isManualLookActive = true;
-      lastLookPointer.x = event.clientX;
-      lastLookPointer.y = event.clientY;
-      event.preventDefault();
-      if (!walkControls.isLocked && !document.pointerLockElement) {
-        walkControls.lock();
-      }
-      if (!walkControls.isLocked && !document.pointerLockElement) {
-        appendLog('Manual look active. Drag mouse to rotate; click to lock for raw-look mode.');
-      }
+      joystickManager = nipplejs.create({
+        zone: movePad,
+        mode: 'static',
+        position: { left: '50%', top: '50%' },
+        color: '#ffffff',
+        size: 88,
+        multitouch: false,
+        restOpacity: 0.75
+      });
+      joystickManager.on('start', () => {
+        appendLog('Joystick start');
+      });
+      joystickManager.on('move', (_evt, data) => {
+        const x = data?.vector?.x || 0;
+        const y = data?.vector?.y || 0;
+        analogMoveX = THREE.MathUtils.clamp(x, -1, 1);
+        analogMoveZ = THREE.MathUtils.clamp(y, -1, 1);
+      });
+      joystickManager.on('end', () => {
+        analogMoveX = 0;
+        analogMoveZ = 0;
+        appendLog('Joystick end');
+      });
+      movePadBound = true;
+      appendLog('Joystick controls bound (nipplejs)');
     }
 
-    function onManualLookMove(event) {
-      if (!walkControls || !controlCamera || walkControls.isLocked) {
-        return;
+    function clearMovePadInputs() {
+      analogMoveX = 0;
+      analogMoveZ = 0;
+      if (joystickManager) {
+        joystickManager.destroy();
+        joystickManager = null;
+        movePadBound = false;
       }
-      if (!isManualLookActive) {
-        isManualLookActive = true;
-        lastLookPointer.x = event.clientX;
-        lastLookPointer.y = event.clientY;
-        return;
-      }
-      const dx = event.clientX - lastLookPointer.x;
-      const dy = event.clientY - lastLookPointer.y;
-      lastLookPointer.x = event.clientX;
-      lastLookPointer.y = event.clientY;
-
-      controlCamera.rotation.order = 'YXZ';
-      controlCamera.rotation.y -= dx * walkSpeedSettings.rotationSpeed;
-      controlCamera.rotation.x -= dy * walkSpeedSettings.rotationSpeed;
-      controlCamera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, controlCamera.rotation.x));
-    }
-
-    function onManualLookUp() {
-      isManualLookActive = false;
+      moveState.forward = false;
+      moveState.backward = false;
+      moveState.left = false;
+      moveState.right = false;
+      moveState.up = false;
+      moveState.down = false;
+      moveState.sprint = false;
     }
 
     function getSceneIdFromPath(pathOrUrl) {
       const normalizedPath = `${pathOrUrl || ''}`.toLowerCase().split('?')[0].split('#')[0];
-      const matched = availableScenes.find((scene) => normalizedPath.includes(scene.id) || normalizedPath.endsWith(`${scene.path.toLowerCase()}`));
-      return matched ? matched.id : null;
+      const decodedPath = (() => {
+        try {
+          return decodeURIComponent(normalizedPath);
+        } catch (_error) {
+          return normalizedPath;
+        }
+      })();
+      const matched = availableScenes.find((scene) => {
+        const scenePath = scene.path.toLowerCase();
+        return normalizedPath.includes(scene.id) || normalizedPath.endsWith(scenePath) ||
+          decodedPath.includes(scene.id) || decodedPath.endsWith(scenePath);
+      });
+      if (matched) {
+        return matched.id;
+      }
+
+      const fallback = decodedPath.split(/[\\/]/).pop().split('.')[0];
+      if (fallback && availableScenes.some((scene) => scene.id === fallback)) {
+        return fallback;
+      }
+      return null;
     }
 
     function createViewerMount() {
@@ -915,27 +1704,69 @@
       }
 
       controlElement = renderRoot;
-      walkControls = new PointerLockControls(camera, renderRoot);
-      controlCamera = walkControls.getObject();
+      controlCamera = camera;
       moveVelocity.set(0, 0, 0);
       moveDirection.set(0, 0, 0);
       previousFrameTime = performance.now();
+      moveDirectionWorld.set(0, 0, 0);
+      syncMovementBodyToCamera();
+      const pointerLockControls = new PointerLockControls(camera, renderRoot);
+      walkControls = pointerLockControls;
 
       if (renderRoot) {
         renderRoot.style.touchAction = 'none';
-        renderRoot.style.cursor = 'crosshair';
-        renderRoot.addEventListener('click', requestPointerLockOnCanvas);
-        renderRoot.addEventListener('pointerdown', onManualLookDown);
-        renderRoot.addEventListener('pointermove', onManualLookMove);
-        renderRoot.addEventListener('pointerup', onManualLookUp);
-        renderRoot.addEventListener('pointerleave', onManualLookUp);
+        renderRoot.style.cursor = 'grab';
+        if (!requestPointerLockHandler) {
+          requestPointerLockHandler = (event) => {
+            if (event && event.button !== undefined && event.button !== 0) {
+              return;
+            }
+            if (!walkControls) {
+              return;
+            }
+            if (walkControls?.lock) {
+              walkControls.lock();
+              appendLog('Pointer lock requested. Move mouse to look around.');
+              event.preventDefault();
+            }
+          };
+        }
+        if (!dragLookMouseDownHandler) {
+          dragLookMouseDownHandler = (event) => {
+            if (!walkControls?.isLocked) {
+              return;
+            }
+            dragLookActive = true;
+            renderRoot.style.cursor = 'grabbing';
+          };
+        }
+        if (!dragLookMouseUpHandler) {
+          dragLookMouseUpHandler = () => {
+            if (!dragLookActive) {
+              return;
+            }
+            dragLookActive = false;
+            renderRoot.style.cursor = 'grab';
+          };
+        }
+        renderRoot.addEventListener('click', requestPointerLockHandler, { passive: false });
+        renderRoot.addEventListener('mousedown', dragLookMouseDownHandler, { passive: true });
+        renderRoot.addEventListener('mouseup', dragLookMouseUpHandler, { passive: true });
+        renderRoot.addEventListener('mouseleave', dragLookMouseUpHandler, { passive: true });
       }
 
       const viewerControlAdapter = {
-        object: walkControls.getObject(),
-        getObject: () => walkControls.getObject(),
+        object: controlCamera,
+        getObject: () => controlCamera,
         enabled: true,
-        update: () => {}
+        update: () => {
+          if (!walkControls) {
+            return;
+          }
+          if (walkControls?.update) {
+            walkControls.update();
+          }
+        }
       };
 
       viewerInstance.controls = viewerControlAdapter;
@@ -949,11 +1780,12 @@
         window.addEventListener('keydown', movementKeydownHandler);
         window.addEventListener('keyup', movementKeyupHandler);
       }
+      bindMovePadControls();
 
-    const walkVelocity = walkSpeedSettings.walkVelocity;
-    const damping = walkSpeedSettings.damping;
-    const verticalSpeed = walkSpeedSettings.verticalSpeed;
-    const sprintMultiplier = walkSpeedSettings.sprintMultiplier;
+      const walkVelocity = walkSpeedSettings.walkVelocity;
+      const damping = walkSpeedSettings.damping;
+      const verticalSpeed = walkSpeedSettings.verticalSpeed;
+      const sprintMultiplier = walkSpeedSettings.sprintMultiplier;
 
       const tick = () => {
         if (!walkControls || !movementClock) {
@@ -966,32 +1798,61 @@
         previousFrameTime = now;
 
         if (walkControls) {
-          moveDirection.x = Number(moveState.right) - Number(moveState.left);
-          moveDirection.z = Number(moveState.forward) - Number(moveState.backward);
+          moveDirection.x = (Number(moveState.right) - Number(moveState.left)) + (analogMoveX * joystickMoveScale);
+          moveDirection.z = (Number(moveState.forward) - Number(moveState.backward)) + (analogMoveZ * joystickMoveScale);
           moveDirection.y = 0;
+          moveDirection.clampLength(0, 1);
           moveDirection.normalize();
 
-          const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
-          if (moveDirection.z !== 0) {
-            moveVelocity.z -= moveDirection.z * speed * damping * delta;
+          if (movementWorld && movementBody && movementPhysicsEnabled) {
+            moveWithPhysics(delta, walkVelocity * (movementPhysicsConfig.playerSpeed / 3), movementPhysicsConfig.sprintMultiplier);
           } else {
-            moveVelocity.z -= moveVelocity.z * 10.0 * delta;
-          }
+            const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
+            if (moveDirection.z !== 0) {
+              moveVelocity.z -= moveDirection.z * speed * damping * delta;
+            } else {
+              moveVelocity.z -= moveVelocity.z * 10.0 * delta;
+            }
 
-          if (moveDirection.x !== 0) {
-            moveVelocity.x -= moveDirection.x * speed * damping * delta;
-          } else {
-            moveVelocity.x -= moveVelocity.x * 10.0 * delta;
-          }
+            if (moveDirection.x !== 0) {
+              moveVelocity.x -= moveDirection.x * speed * damping * delta;
+            } else {
+              moveVelocity.x -= moveVelocity.x * 10.0 * delta;
+            }
 
-          walkControls.moveRight(-moveVelocity.x * delta);
-          walkControls.moveForward(-moveVelocity.z * delta);
+            controlCamera.getWorldDirection(moveForwardVector);
+            moveForwardVector.y = 0;
+            if (moveForwardVector.lengthSq() < 1e-5) {
+              moveForwardVector.set(0, 0, -1);
+            }
+            moveForwardVector.normalize();
+            moveRightVector.crossVectors(moveForwardVector, controlCamera.up).normalize();
 
-          if (moveState.up) {
-            controlCamera.position.y += verticalSpeed * speed * delta * 0.2;
+            const rightDelta = -moveVelocity.x * delta;
+            const forwardDelta = -moveVelocity.z * delta;
+            controlCamera.position.addScaledVector(moveRightVector, rightDelta);
+            controlCamera.position.addScaledVector(moveForwardVector, forwardDelta);
+            if (walkControls.target) {
+              walkControls.target.addScaledVector(moveRightVector, rightDelta);
+              walkControls.target.addScaledVector(moveForwardVector, forwardDelta);
+            }
+            syncMovementBodyToCamera();
+
+            if (moveState.up) {
+              controlCamera.position.y += verticalSpeed * speed * delta * 0.2;
+              if (walkControls.target) {
+                walkControls.target.y += verticalSpeed * speed * delta * 0.2;
+              }
+            }
+            if (moveState.down) {
+              controlCamera.position.y -= verticalSpeed * speed * delta * 0.2;
+              if (walkControls.target) {
+                walkControls.target.y -= verticalSpeed * speed * delta * 0.2;
+              }
+            }
           }
-          if (moveState.down) {
-            controlCamera.position.y -= verticalSpeed * speed * delta * 0.2;
+          if (walkControls?.update) {
+            walkControls.update();
           }
         }
 
@@ -999,7 +1860,8 @@
       };
 
       tick();
-      appendLog('Walkaround controls initialized. Click inside viewer to lock mouse and look around.');
+      appendLog('Walkaround controls initialized. Click viewer to lock pointer, move mouse to look.');
+      appendLog('Walkaround listeners attached: pointer lock + WASD movement.');
     }
 
     const resolveAssetPath = (path) => new URL(path, window.location.href).toString();
@@ -1047,13 +1909,17 @@
       }
     }
 
-    async function ensureViewer() {
+    async function ensureViewer(sceneId = 'externalview', sceneCameraPreset = null) {
       teardownWalkControls();
       await disposeViewerSafely();
 
       viewerHost.innerHTML = '';
       viewerMount = createViewerMount();
       viewerHost.appendChild(viewerMount);
+      const preset = sceneCameraPreset || {
+        position: [0, 0.3, 5],
+        lookAt: [0, 0, 0]
+      };
 
       viewer = new GaussianSplats3D.Viewer({
         rootElement: viewerMount,
@@ -1068,13 +1934,18 @@
         focalAdjustment: 1,
         enableOptionalEffects: false,
         background: 0x0b0f17,
-        initialCameraPosition: [0, 1.4, 6],
-        initialCameraLookAt: [0, 1.2, 0],
+        initialCameraPosition: preset.position,
+        initialCameraLookAt: preset.lookAt,
         cameraUp: [0, 1, 0],
         sharedMemoryForWorkers: false,
         webXRMode: GaussianSplats3D.WebXRMode.None
       });
+      await initializeMovementPhysics();
       setupWalkaroundControls(viewer);
+      if (controlCamera && sceneCameraPreset?.position?.length === 3) {
+        controlCamera.position.set(...sceneCameraPreset.position);
+        syncMovementBodyToCamera();
+      }
 
       const viewerNode = viewer.rootElement || viewer.renderer?.domElement || viewer.domElement || viewer.element;
       if (viewerNode) {
@@ -1097,17 +1968,20 @@
       }
 
       const isTempObjectUrl = `${pathOrUrl}`.startsWith('blob:');
+      const selectedSceneId = getSceneIdFromPath(pathOrUrl);
+      const hardcodedScenePreset = selectedSceneId ? sceneCameraPresets[selectedSceneId] : null;
+      const selectedPreset = hardcodedScenePreset || sceneCameraPresets.externalview || null;
+      appendLog(`Applying fixed hardcoded preset for ${selectedSceneId || 'externalview'}`);
       const detectedFormat = forcedFormat || detectFormatByPath(pathOrUrl);
       appendLog(`Start load: ${pathOrUrl}`);
       appendLog(`Requested format: ${formatToName(detectedFormat)}`);
       await logSceneMetadata(pathOrUrl);
-      const selectedSceneId = getSceneIdFromPath(pathOrUrl);
       setLoading(true);
       setStatus(`Loading ${pathOrUrl}...`, true);
       let lastProgress = -1;
 
       try {
-        await ensureViewer();
+        await ensureViewer(selectedSceneId, selectedPreset);
         if (loadToken !== activeLoadToken) {
           return;
         }
@@ -1139,7 +2013,7 @@
           } else if (loadToken === activeLoadToken) {
             appendLog(`Retrying scene load by resetting viewer for: ${pathOrUrl}`);
             await disposeViewerSafely();
-            await ensureViewer();
+            await ensureViewer(selectedSceneId, selectedPreset);
             await viewer.addSplatScene(pathOrUrl, baseLoadOptions);
           } else {
             throw sceneLoadError;
@@ -1148,11 +2022,11 @@
         if (viewer.start) {
           viewer.start();
         }
-        requestAnimationFrame(() => {
-          centerCameraToScene(viewer, selectedSceneId);
-        });
+        scheduleSceneCenter(viewer, selectedSceneId, selectedPreset);
+        lastSceneId = selectedSceneId;
         const loadedSceneCount = viewer?.splatMesh?.scenes?.length || 0;
         appendLog(`Scene ready. URL=${pathOrUrl} nodes=${loadedSceneCount}`);
+        setActiveSceneThumb(selectedSceneId);
         setStatus(`Loaded: ${pathOrUrl}`);
       } catch (error) {
         const message = error?.message || String(error);
@@ -1186,16 +2060,12 @@
       }
     });
 
-    altViewerButton.addEventListener('click', () => {
-      const target = new URL('alt-splat-viewer.html', window.location.href);
-      const selectedScene = sceneSelect.value;
-      if (selectedScene) {
-        target.searchParams.set('scene', selectedScene);
-      }
-      window.open(target.toString(), '_blank');
+    saveStartButton.addEventListener('click', () => {
+      saveCurrentStartPreset();
     });
 
     initializeSceneDropdown();
+    buildSceneThumbnails();
     sceneSelect.addEventListener('change', () => {
       const selected = sceneSelect.value;
       if (!selected) {
