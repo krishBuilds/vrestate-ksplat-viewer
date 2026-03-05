@@ -101,7 +101,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.75);
+      background-color: rgba(0, 0, 0, 0.55);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -120,12 +120,10 @@
       width: 160px;
       height: 160px;
       border-radius: 50%;
-      border: 2px solid rgba(180, 216, 255, 0.45);
-      box-shadow: 0 0 28px rgba(88, 167, 255, 0.45), inset 0 0 24px rgba(4, 24, 44, 0.9);
+      border: 2px solid rgba(180, 216, 255, 0.9);
+      box-shadow: 0 0 22px rgba(120, 190, 255, 0.7), 0 0 0 2px rgba(4, 20, 40, 0.9) inset;
       background:
-        radial-gradient(circle at 25% 22%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.08) 18%, transparent 32%),
-        radial-gradient(circle at 55% 70%, #4f8fc7 0%, #0e3f6f 46%, #09294c 72%, #021423 100%),
-        linear-gradient(125deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0) 55%);
+        radial-gradient(circle at 30% 28%, #e4f4ff 0%, #4ca6ff 32%, #0e3f6f 58%, #06152f 86%, #021221 100%);
       overflow: hidden;
       position: relative;
     }
@@ -139,19 +137,6 @@
       border-top-color: rgba(80, 210, 255, 0.85);
       border-right-color: rgba(8, 16, 31, 0.25);
       animation: loading-ring 1.4s linear infinite;
-      pointer-events: none;
-    }
-
-    #earth-loader::after {
-      content: "";
-      position: absolute;
-      inset: 12px;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 48%),
-        radial-gradient(circle at 70% 65%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 45%);
-      opacity: 0.75;
-      animation: loading-ring 2.3s linear infinite reverse;
       pointer-events: none;
     }
 
@@ -190,7 +175,8 @@
     #scene-selector {
       position: fixed;
       top: 74px;
-      left: 20px;
+      right: 20px;
+      left: auto;
       z-index: 1002;
       display: flex;
       align-items: center;
@@ -219,7 +205,8 @@
     #scene-thumbs {
       position: fixed;
       top: 122px;
-      left: 20px;
+      right: 20px;
+      left: auto;
       z-index: 1002;
       width: 190px;
       display: flex;
@@ -280,25 +267,6 @@
       background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
       pointer-events: none;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-    }
-
-    #save-start-button {
-      position: fixed;
-      top: 74px;
-      left: 320px;
-      z-index: 1002;
-      border: none;
-      border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 12px;
-      color: #fff;
-      background: rgba(255, 255, 255, 0.16);
-      cursor: pointer;
-      transition: background-color 0.25s ease;
-    }
-
-    #save-start-button:hover {
-      background: rgba(0, 0, 0, 0.93);
     }
 
     #toggle-button,
@@ -486,7 +454,6 @@
     <select id="scene-select"></select>
   </div>
   <div id="scene-thumbs" aria-label="Scene thumbnails"></div>
-  <button id="save-start-button" type="button">Save Start Point</button>
   <div id="move-pad" aria-label="Movement controls">
     <div class="move-pad-center" aria-hidden="true"></div>
   </div>
@@ -546,7 +513,6 @@
     const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
     const fullScreenIcon = document.getElementById('fullscreen-icon');
     const sceneSelect = document.getElementById('scene-select');
-    const saveStartButton = document.getElementById('save-start-button');
     const movePad = document.getElementById('move-pad');
     const sceneThumbs = document.getElementById('scene-thumbs');
     const sceneThumbnailMap = new Map();
@@ -2124,10 +2090,6 @@
         await document.exitFullscreen().catch(() => {});
         fullScreenTooltip.textContent = 'Fullscreen';
       }
-    });
-
-    saveStartButton.addEventListener('click', () => {
-      saveCurrentStartPreset();
     });
 
     initializeSceneDropdown();
