@@ -585,16 +585,13 @@
     });
     const colliderSourceGroups = Object.freeze([
       {
-        local: './Collider/floor.glb',
-        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/floor.glb'
+        local: './Collider/floor.glb'
       },
       {
-        local: './Collider/walls.glb',
-        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/walls.glb'
+        local: './Collider/walls.glb'
       },
       {
-        local: './Collider/collider.glb',
-        remote: 'https://calm-alpaca-1f7a0c.netlify.app/Collider/collider.glb'
+        local: './Collider/collider.glb'
       }
     ]);
     const sceneCameraPresets = Object.freeze({
@@ -814,7 +811,7 @@
       colliderLoadPromise = (async () => {
         let loadedAny = false;
         for (const entry of colliderSourceGroups) {
-          const options = [entry.local, entry.remote];
+          const options = [entry.local];
           let loaded = false;
           for (const candidate of options) {
             try {
