@@ -25,18 +25,3 @@ You can also:
 
 - Viewer library: `@mkkellogg/gaussian-splats-3d` via jsDelivr module CDN.
 - UI styling and control pattern modeled on `https://calm-alpaca-1f7a0c.netlify.app/index_desktop.html`.
-
-## Playwright mode checker
-
-Use this helper to open the local webapp and automatically cycle through all scene modes:
-
-1. Install dependencies:
-   - `npm install`
-   - `npx playwright install`
-2. Start local server (e.g., `python -m http.server 8000`)
-3. Run:
-   - `npm run watch-modes -- http://127.0.0.1:8000/index.html`
-   - Add `--continuous` to keep cycling forever:  
-     `npm run watch-modes -- http://127.0.0.1:8000/index.html -- --continuous`
-
-Screenshots are saved in `artifacts/mode-check/`.
