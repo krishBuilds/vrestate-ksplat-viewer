@@ -1,0 +1,24 @@
+::1 - - [03/Mar/2026 12:13:15] "GET / HTTP/1.1" 200 -
+::1 - - [03/Mar/2026 12:13:15] code 404, message File not found
+::1 - - [03/Mar/2026 12:13:15] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+::1 - - [03/Mar/2026 12:13:15] "GET /Assets/logo.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:13:15] "GET /Assets/address-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:13:15] "GET /Assets/freewalk-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:13:15] "GET /Assets/fullscreen-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:13:21] "GET / HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:13:21] code 404, message File not found
+::1 - - [03/Mar/2026 12:13:21] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+::1 - - [03/Mar/2026 12:14:16] "GET / HTTP/1.1" 200 -
+::1 - - [03/Mar/2026 12:14:16] code 404, message File not found
+::1 - - [03/Mar/2026 12:14:16] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+::1 - - [03/Mar/2026 12:14:16] "GET /Assets/logo.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:14:16] "GET /Assets/address-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:14:16] "GET /Assets/freewalk-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:14:16] "GET /Assets/fullscreen-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:16:36] "GET / HTTP/1.1" 200 -
+::1 - - [03/Mar/2026 12:16:36] code 404, message File not found
+::1 - - [03/Mar/2026 12:16:36] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+::1 - - [03/Mar/2026 12:16:36] "GET /Assets/logo.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:16:36] "GET /Assets/address-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:16:36] "GET /Assets/freewalk-icon.png HTTP/1.1" 304 -
+::1 - - [03/Mar/2026 12:16:36] "GET /Assets/fullscreen-icon.png HTTP/1.1" 304 -

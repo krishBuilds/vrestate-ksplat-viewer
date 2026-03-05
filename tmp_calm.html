@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>VR Estate Viewings</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: black;
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif; /* Apply Montserrat font */
+    }
+
+    #logo-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: 45px;
+      height: auto;
+      z-index: 1100;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #logo-button img {
+      width: 100%;
+      height: auto;
+      transition: filter 0.3s ease;
+    }
+
+    #logo-button:hover img {
+      filter: brightness(0.05);
+    }
+
+    #address-bar {
+      position: fixed;
+      top: 22px;
+      right: 25px;
+      display: flex;
+      align-items: center;
+      color: white;
+      font-size: 17px;
+      z-index: 1100;
+      text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 25px;
+      padding: 7px 15px;
+      gap: 10px;
+    }
+
+    #address-bar img {
+      width: 22px;
+      height: 22px;
+      margin-right: 1px;
+    }
+
+    /* Navigation and iframe containers */
+
+    #nav-container,
+    #iframe-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Smooth fade-in/out for navigation container */
+
+    #nav-container {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: black;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    }
+
+    /* Hidden state */
+
+    #nav-container.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Smooth fade-in/out for iframe container */
+
+    #iframe-container {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    }
+
+    /* Active state */
+
+    #iframe-container.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Toggle Button */
+
+    #toggle-button {
+      position: fixed;
+      bottom: 12px;
+      right: 20px;
+      z-index: 1000;
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      transition: transform 0.3s ease;
+    }
+
+    #toggle-button:hover {
+      transform: scale(1.1);
+    }
+
+    #toggle-icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    /* Tooltip (Hover Text) */
+
+    #toggle-tooltip {
+      position: absolute;
+      bottom: 45px;
+      right: 0%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 14px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+      pointer-events: none;
+    }
+
+    #toggle-button:hover #toggle-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Fullscreen Button */
+
+    #fullscreen-button {
+    position: fixed;
+    bottom: 12px;
+    left: 20px;
+    z-index: 1000;
+    width: 30px;
+    height: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+    #fullscreen-button:hover {
+    transform: scale(1.1);
+  }
+
+    #fullscreen-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+    /* Tooltip (Hover Text) */
+
+    #fullscreen-tooltip {
+    position: absolute;
+    bottom: 38px;
+    left: 0%;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    pointer-events: none;
+  }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-top: 5px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #fullscreen-button:hover #fullscreen-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+    /* Logo Button & Address Bar - Start Hidden */
+
+    #logo-button, #address-bar {
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+    /* When fullscreen is active */
+
+    #logo-button.visible, #address-bar.visible {
+  opacity: 1;
+}
+
+
+  </style>
+  <script type="module" crossorigin src="./assets/navPage_desktop-C9E35Lkz.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/universal_variables-D0gL5Lf-.js">
+</head>
+<body>
+
+  <!-- Logo Button -->
+  <a href="https://www.vrestateviewings.com" target="_blank" id="logo-button">
+    <img src="./Assets/logo.png" alt="VR Estate Viewings Logo" />
+  </a>
+
+  <!-- Address Bar -->
+  <div id="address-bar">
+    <img src="./Assets/address-icon.png" alt="Address Icon" />
+    <span></span>
+  </div>
+
+  <!-- Navigation Page Container -->
+  <div id="nav-container"></div>
+
+  <!-- Explorer Iframe -->
+  <div id="iframe-container">
+    <iframe id="explorer-iframe" src="explorer_desktop.html" frameborder="0" style="width: 100%; height: 100%;"></iframe>
+  </div>
+
+  <!-- Toggle Button -->
+  <button id="toggle-button">
+    <img id="toggle-icon" src="./Assets/freewalk-icon.png" alt="Toggle View" />
+    <div id="toggle-tooltip">Walkaround</div>
+  </button>
+
+  <!-- Fullscreen Button (Initially Hidden) -->
+<button id="fullscreen-button" style="display: none;">
+  <img id="fullscreen-icon" src="./Assets/fullscreen-icon.png" alt="Fullscreen" />
+  <div id="fullscreen-tooltip">Fullscreen</div>
+</button>
+
+  <!-- JavaScript -->
+</body>
+</html>
