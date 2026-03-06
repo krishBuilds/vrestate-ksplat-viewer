@@ -51,26 +51,36 @@
       filter: brightness(0.85);
     }
 
-    #address-bar {
+    #back-to-landing {
       position: fixed;
-      top: 22px;
-      right: 25px;
-      display: flex;
-      align-items: center;
-      color: white;
-      font-size: 17px;
+      top: 68px;
+      left: 15px;
       z-index: 1100;
-      text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.7);
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 25px;
-      padding: 7px 15px;
-      gap: 10px;
-      transition: opacity 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(7, 12, 20, 0.64);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f2f7fb;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(10px);
+      transition: background 0.2s ease, transform 0.2s ease;
     }
 
-    #address-bar img {
-      width: 22px;
-      height: 22px;
+    #back-to-landing:hover {
+      background: rgba(15, 25, 40, 0.78);
+      transform: translateY(-1px);
+    }
+
+    #back-to-landing::before {
+      content: "\2190";
+      font-size: 14px;
     }
 
     #viewer-container,
@@ -101,7 +111,9 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.55);
+      background:
+        radial-gradient(circle at 50% 46%, rgba(46, 111, 173, 0.14), transparent 20%),
+        rgba(0, 0, 0, 0.72);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -116,33 +128,158 @@
       pointer-events: auto;
     }
 
+    #earth-loader-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
     #earth-loader {
-      width: 160px;
-      height: 160px;
+      width: 176px;
+      height: 176px;
       border-radius: 50%;
-      border: 2px solid rgba(180, 216, 255, 0.9);
-      box-shadow: 0 0 22px rgba(120, 190, 255, 0.7), 0 0 0 2px rgba(4, 20, 40, 0.9) inset;
+      border: 2px solid rgba(194, 227, 255, 0.95);
+      box-shadow: 0 0 28px rgba(120, 190, 255, 0.72), 0 0 0 2px rgba(4, 20, 40, 0.9) inset;
       background:
-        radial-gradient(circle at 30% 28%, #e4f4ff 0%, #4ca6ff 32%, #0e3f6f 58%, #06152f 86%, #021221 100%);
+        radial-gradient(circle at 31% 28%, rgba(240, 248, 255, 0.95), rgba(240, 248, 255, 0.24) 18%, transparent 25%),
+        radial-gradient(circle at 35% 32%, #8edbff 0%, #4ba8ff 30%, #115a99 58%, #072246 83%, #03101f 100%);
       overflow: hidden;
       position: relative;
+      animation: earth-float 2.8s ease-in-out infinite;
     }
 
     #earth-loader::before {
       content: "";
       position: absolute;
-      inset: 6px;
+      inset: 11px;
       border-radius: 50%;
-      border: 10px solid rgba(255, 255, 255, 0.22);
-      border-top-color: rgba(80, 210, 255, 0.85);
-      border-right-color: rgba(8, 16, 31, 0.25);
-      animation: loading-ring 1.4s linear infinite;
+      background:
+        radial-gradient(circle at 18% 30%, rgba(122, 230, 148, 0.98) 0 10%, transparent 11%),
+        radial-gradient(circle at 32% 52%, rgba(82, 209, 118, 0.96) 0 14%, transparent 15%),
+        radial-gradient(circle at 48% 34%, rgba(89, 214, 125, 0.94) 0 10%, transparent 11%),
+        radial-gradient(circle at 59% 56%, rgba(74, 199, 112, 0.92) 0 12%, transparent 13%),
+        radial-gradient(circle at 75% 40%, rgba(98, 220, 132, 0.96) 0 10%, transparent 11%),
+        radial-gradient(circle at 82% 64%, rgba(78, 197, 114, 0.92) 0 8%, transparent 9%),
+        linear-gradient(90deg, transparent 0 10%, rgba(55, 180, 98, 0.16) 28%, transparent 42%, rgba(101, 216, 138, 0.18) 58%, transparent 76%);
+      opacity: 1;
+      background-size: 170% 100%;
+      background-position: 0% 50%;
+      filter: saturate(1.18);
+      animation: earth-continents 8s linear infinite;
       pointer-events: none;
     }
 
-    @keyframes loading-ring {
+    #earth-loader::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        linear-gradient(115deg, transparent 0 28%, rgba(255, 255, 255, 0.32) 36%, transparent 46%),
+        radial-gradient(circle at 50% 118%, rgba(255, 255, 255, 0.36), transparent 42%),
+        radial-gradient(circle at 74% 20%, rgba(255, 255, 255, 0.12), transparent 18%);
+      pointer-events: none;
+    }
+
+    #earth-loader-core {
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: inset -18px -18px 30px rgba(2, 12, 26, 0.42);
+    }
+
+    #earth-loader-clouds {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.42) 0 9%, transparent 10%),
+        radial-gradient(circle at 38% 22%, rgba(255, 255, 255, 0.34) 0 7%, transparent 8%),
+        radial-gradient(circle at 56% 64%, rgba(255, 255, 255, 0.26) 0 11%, transparent 12%),
+        radial-gradient(circle at 78% 36%, rgba(255, 255, 255, 0.22) 0 8%, transparent 9%);
+      mix-blend-mode: screen;
+      opacity: 0.9;
+      animation: earth-clouds 11s linear infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader-ring {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(173, 224, 255, 0.32);
+      box-shadow: 0 0 34px rgba(103, 186, 255, 0.24);
+      animation: earth-ring 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader-text {
+      display: grid;
+      gap: 4px;
+      text-align: center;
+    }
+
+    #earth-loader-text strong {
+      color: #eef6ff;
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    #earth-loader-text span {
+      color: rgba(218, 233, 249, 0.82);
+      font-size: 0.92rem;
+    }
+
+    #earth-loader-tagline {
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    @keyframes earth-continents {
+      from {
+        background-position: 0% 50%;
+      }
+
       to {
-        transform: rotate(360deg);
+        background-position: 180% 50%;
+      }
+    }
+
+    @keyframes earth-float {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes earth-clouds {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(14px);
+      }
+    }
+
+    @keyframes earth-ring {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
       }
     }
 
@@ -172,47 +309,22 @@
       display: none !important;
     }
 
-    #scene-selector {
-      position: fixed;
-      top: 74px;
-      right: 20px;
-      left: auto;
-      z-index: 1002;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.45);
-      border-radius: 10px;
-      padding: 6px 10px;
-      color: #f6f6f6;
-      font-size: 13px;
-    }
-
     #scene-select {
-      border: none;
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 13px;
-      min-width: 190px;
-    }
-
-    #scene-select option {
-      color: #111;
+      display: none;
     }
 
     #scene-thumbs {
       position: fixed;
-      top: 122px;
+      top: 50%;
       right: 20px;
       left: auto;
+      transform: translateY(-50%);
       z-index: 1002;
       width: 190px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: calc(100vh - 150px);
+      max-height: calc(100vh - 32px);
       overflow-y: auto;
       pointer-events: auto;
       padding-right: 6px;
@@ -267,6 +379,60 @@
       background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
       pointer-events: none;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    #height-control {
+      position: fixed;
+      top: 50%;
+      right: 228px;
+      transform: translateY(-50%);
+      z-index: 1003;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 10px;
+      border-radius: 16px;
+      background: rgba(10, 13, 20, 0.72);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(10px);
+    }
+
+    .height-control-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    #height-readout {
+      min-width: 48px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .height-control-button {
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .height-control-button:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: scale(1.04);
+    }
+
+    .height-control-button:active {
+      transform: scale(0.98);
     }
 
     #toggle-button,
@@ -402,6 +568,15 @@
     }
 
     @media (max-width: 700px) {
+      #scene-thumbs {
+        right: 14px;
+        width: 154px;
+      }
+
+      #height-control {
+        right: 176px;
+      }
+
       #move-pad {
         width: 126px;
         height: 126px;
@@ -433,25 +608,61 @@
       }
     }
 
+    @media (max-width: 520px) {
+      #back-to-landing {
+        top: 64px;
+        left: 12px;
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 12px;
+      }
+
+      #scene-thumbs {
+        top: auto;
+        bottom: 130px;
+        transform: none;
+        max-height: calc(100vh - 260px);
+      }
+
+      #height-control {
+        top: auto;
+        right: 14px;
+        bottom: 88px;
+        transform: none;
+        flex-direction: row;
+        padding: 8px 10px;
+      }
+    }
+
   </style>
 </head>
 <body>
-  <button type="button" id="logo-button" aria-label="VR Estate local viewer">
-    <img src="./Assets/logo.png" alt="VR Estate Viewings logo" />
-  </button>
-
-  <div id="address-bar">
-    <img src="./Assets/address-icon.png" alt="Address icon" />
-    <span>VR Estate Local Viewer</span>
-  </div>
+  <a id="logo-button" href="./landing.html" aria-label="VR Estate landing page">
+    <img src="./assets/logo.png" alt="VR Estate Viewings logo" />
+  </a>
+  <a id="back-to-landing" href="./landing.html">Back to landing page</a>
 
   <div id="status-pill"></div>
   <div id="loading-overlay">
-    <div id="earth-loader" role="img" aria-label="Loading"></div>
+    <div id="earth-loader-shell">
+      <div id="earth-loader" role="img" aria-label="Loading property walkthrough">
+        <div id="earth-loader-core"></div>
+        <div id="earth-loader-clouds"></div>
+        <div id="earth-loader-ring"></div>
+      </div>
+      <div id="earth-loader-text">
+        <strong>Loading walkthrough</strong>
+        <span>Stepping into the property...</span>
+        <span id="earth-loader-tagline">Discover the future of seeing real estate.</span>
+      </div>
+    </div>
   </div>
-  <div id="scene-selector">
-    <label for="scene-select">Scene</label>
-    <select id="scene-select"></select>
+  <select id="scene-select" aria-hidden="true" tabindex="-1"></select>
+  <div id="height-control" aria-label="Height controls">
+    <button type="button" id="height-up" class="height-control-button" aria-label="Increase height">+</button>
+    <div class="height-control-label">Height</div>
+    <div id="height-readout">1.10m</div>
+    <button type="button" id="height-down" class="height-control-button" aria-label="Decrease height">-</button>
   </div>
   <div id="scene-thumbs" aria-label="Scene thumbnails"></div>
   <div id="move-pad" aria-label="Movement controls">
@@ -462,12 +673,12 @@
   <div id="nav-container"></div>
 
   <button id="toggle-button">
-    <img id="toggle-icon" src="./Assets/freewalk-icon.png" alt="Toggle view mode" />
+    <img id="toggle-icon" src="./assets/freewalk-icon.png" alt="Toggle view mode" />
     <div id="toggle-tooltip">Walkaround</div>
   </button>
 
   <button id="fullscreen-button">
-    <img id="fullscreen-icon" src="./Assets/fullscreen-icon.png" alt="Fullscreen" />
+    <img id="fullscreen-icon" src="./assets/fullscreen-icon.png" alt="Fullscreen" />
     <div id="fullscreen-tooltip">Fullscreen</div>
   </button>
 
@@ -513,6 +724,9 @@
     const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
     const fullScreenIcon = document.getElementById('fullscreen-icon');
     const sceneSelect = document.getElementById('scene-select');
+    const heightUpButton = document.getElementById('height-up');
+    const heightDownButton = document.getElementById('height-down');
+    const heightReadout = document.getElementById('height-readout');
     const movePad = document.getElementById('move-pad');
     const sceneThumbs = document.getElementById('scene-thumbs');
     const sceneThumbnailMap = new Map();
@@ -564,9 +778,12 @@
     const computedSceneCenterPresets = new Map();
     const usePhysicsWalkaround = false;
     const usePointerLock = false;
-    const manualLookSpeed = 0.0025;
+    const manualLookSpeed = 0.005;
+    const minCameraHeight = 0.4;
+    const maxCameraHeight = 3.2;
+    const heightAdjustStep = 0.15;
     const walkSpeedSettings = {
-      walkVelocity: 1.0,
+      walkVelocity: 0.6,
       damping: 10.0,
       verticalSpeed: 3.0,
       sprintMultiplier: 2.0
@@ -702,6 +919,7 @@
       camera.position.set(x, cameraY, z);
       camera.rotation.set(0, 0, 0);
       camera.lookAt(lx, ly, lz);
+      updateHeightReadout(camera.position.y);
       if (walkControls?.target) {
         walkControls.target.set(lx, ly, lz);
         walkControls.update();
@@ -1215,6 +1433,33 @@
       console.log(`[Viewer] ${message}`);
     }
 
+    function updateHeightReadout(heightValue = controlCamera?.position?.y) {
+      if (!heightReadout || !Number.isFinite(heightValue)) {
+        return;
+      }
+      heightReadout.textContent = `${heightValue.toFixed(2)}m`;
+    }
+
+    function adjustViewerHeight(delta) {
+      if (!controlCamera) {
+        return;
+      }
+
+      const nextHeight = THREE.MathUtils.clamp(controlCamera.position.y + delta, minCameraHeight, maxCameraHeight);
+      const appliedDelta = nextHeight - controlCamera.position.y;
+      if (Math.abs(appliedDelta) < 1e-5) {
+        return;
+      }
+
+      controlCamera.position.y = nextHeight;
+      if (walkControls?.target) {
+        walkControls.target.y += appliedDelta;
+      }
+      syncMovementBodyToCamera();
+      updateHeightReadout(nextHeight);
+      setStatus(`Height: ${nextHeight.toFixed(2)}m`);
+    }
+
     function normalizeSceneId(rawId) {
       return `${rawId || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
@@ -1674,6 +1919,7 @@
 
       controlElement = renderRoot;
       controlCamera = camera;
+      updateHeightReadout(controlCamera.position.y);
       moveVelocity.set(0, 0, 0);
       moveDirection.set(0, 0, 0);
       previousFrameTime = performance.now();
@@ -1864,12 +2110,14 @@
               if (walkControls.target) {
                 walkControls.target.y += verticalSpeed * speed * delta * 0.2;
               }
+              updateHeightReadout(controlCamera.position.y);
             }
             if (moveState.down) {
               controlCamera.position.y -= verticalSpeed * speed * delta * 0.2;
               if (walkControls.target) {
                 walkControls.target.y -= verticalSpeed * speed * delta * 0.2;
               }
+              updateHeightReadout(controlCamera.position.y);
             }
           }
           if (walkControls?.update) {
@@ -1973,6 +2221,7 @@
       setupWalkaroundControls(viewer);
       if (controlCamera && sceneCameraPreset?.position?.length === 3) {
         controlCamera.position.set(...sceneCameraPreset.position);
+        updateHeightReadout(controlCamera.position.y);
         syncMovementBodyToCamera();
       }
 
@@ -1986,7 +2235,7 @@
       }
       appendLog(`Viewer created. useBuiltInControls=${viewer.useBuiltInControls}`);
       toggleTooltip.textContent = 'Walkaround';
-      toggleIcon.src = './Assets/freewalk-icon.png';
+      toggleIcon.src = './assets/freewalk-icon.png';
     }
 
     async function loadSplat(pathOrUrl, forcedFormat = undefined) {
@@ -2098,6 +2347,8 @@
       }
       loadSplat(resolveAssetPath(selected), undefined);
     });
+    heightUpButton?.addEventListener('click', () => adjustViewerHeight(heightAdjustStep));
+    heightDownButton?.addEventListener('click', () => adjustViewerHeight(-heightAdjustStep));
 
     const startupAsset = sceneSelect.value || startupAssetPath;
     const resolvedStartupAsset = resolveAssetPath(startupAsset);
