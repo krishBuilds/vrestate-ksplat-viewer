@@ -1,0 +1,2413 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PropertyFutures Viewer</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #logo-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: 45px;
+      height: auto;
+      z-index: 1100;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #logo-button img {
+      width: 100%;
+      height: auto;
+      transition: filter 0.3s ease;
+    }
+
+    #logo-button:hover img {
+      filter: brightness(0.85);
+    }
+
+    #back-to-landing {
+      position: fixed;
+      top: 68px;
+      left: 15px;
+      z-index: 1100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(7, 12, 20, 0.64);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f2f7fb;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(10px);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    #back-to-landing:hover {
+      background: rgba(15, 25, 40, 0.78);
+      transform: translateY(-1px);
+    }
+
+    #back-to-landing::before {
+      content: "\2190";
+      font-size: 14px;
+    }
+
+    #viewer-container,
+    #nav-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      margin: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #viewer-container canvas {
+      touch-action: none;
+    }
+
+    #viewer-container {
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(46, 111, 173, 0.14), transparent 20%),
+        rgba(0, 0, 0, 0.72);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 12000;
+      transition: opacity 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #earth-loader-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    #earth-loader {
+      width: 176px;
+      height: 176px;
+      border-radius: 50%;
+      border: 2px solid rgba(194, 227, 255, 0.95);
+      box-shadow: 0 0 28px rgba(120, 190, 255, 0.72), 0 0 0 2px rgba(4, 20, 40, 0.9) inset;
+      background:
+        radial-gradient(circle at 31% 28%, rgba(240, 248, 255, 0.95), rgba(240, 248, 255, 0.24) 18%, transparent 25%),
+        radial-gradient(circle at 35% 32%, #8edbff 0%, #4ba8ff 30%, #115a99 58%, #072246 83%, #03101f 100%);
+      overflow: hidden;
+      position: relative;
+      animation: earth-float 2.8s ease-in-out infinite;
+    }
+
+    #earth-loader::before {
+      content: "";
+      position: absolute;
+      inset: 11px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 18% 30%, rgba(122, 230, 148, 0.98) 0 10%, transparent 11%),
+        radial-gradient(circle at 32% 52%, rgba(82, 209, 118, 0.96) 0 14%, transparent 15%),
+        radial-gradient(circle at 48% 34%, rgba(89, 214, 125, 0.94) 0 10%, transparent 11%),
+        radial-gradient(circle at 59% 56%, rgba(74, 199, 112, 0.92) 0 12%, transparent 13%),
+        radial-gradient(circle at 75% 40%, rgba(98, 220, 132, 0.96) 0 10%, transparent 11%),
+        radial-gradient(circle at 82% 64%, rgba(78, 197, 114, 0.92) 0 8%, transparent 9%),
+        linear-gradient(90deg, transparent 0 10%, rgba(55, 180, 98, 0.16) 28%, transparent 42%, rgba(101, 216, 138, 0.18) 58%, transparent 76%);
+      opacity: 1;
+      background-size: 170% 100%;
+      background-position: 0% 50%;
+      filter: saturate(1.18);
+      animation: earth-continents 8s linear infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        linear-gradient(115deg, transparent 0 28%, rgba(255, 255, 255, 0.32) 36%, transparent 46%),
+        radial-gradient(circle at 50% 118%, rgba(255, 255, 255, 0.36), transparent 42%),
+        radial-gradient(circle at 74% 20%, rgba(255, 255, 255, 0.12), transparent 18%);
+      pointer-events: none;
+    }
+
+    #earth-loader-core {
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: inset -18px -18px 30px rgba(2, 12, 26, 0.42);
+    }
+
+    #earth-loader-clouds {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.42) 0 9%, transparent 10%),
+        radial-gradient(circle at 38% 22%, rgba(255, 255, 255, 0.34) 0 7%, transparent 8%),
+        radial-gradient(circle at 56% 64%, rgba(255, 255, 255, 0.26) 0 11%, transparent 12%),
+        radial-gradient(circle at 78% 36%, rgba(255, 255, 255, 0.22) 0 8%, transparent 9%);
+      mix-blend-mode: screen;
+      opacity: 0.9;
+      animation: earth-clouds 11s linear infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader-ring {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(173, 224, 255, 0.32);
+      box-shadow: 0 0 34px rgba(103, 186, 255, 0.24);
+      animation: earth-ring 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    #earth-loader-text {
+      display: grid;
+      gap: 4px;
+      text-align: center;
+    }
+
+    #earth-loader-text strong {
+      color: #eef6ff;
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    #earth-loader-text span {
+      color: rgba(218, 233, 249, 0.82);
+      font-size: 0.92rem;
+    }
+
+    #earth-loader-tagline {
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    @keyframes earth-continents {
+      from {
+        background-position: 0% 50%;
+      }
+
+      to {
+        background-position: 180% 50%;
+      }
+    }
+
+    @keyframes earth-float {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes earth-clouds {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(14px);
+      }
+    }
+
+    @keyframes earth-ring {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
+      }
+    }
+
+    #status-pill {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 13px;
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    #status-pill.active {
+      opacity: 1;
+    }
+
+    .progressBarOuterContainer,
+    .infoPanel {
+      display: none !important;
+    }
+
+    #scene-select {
+      display: none;
+    }
+
+    #scene-thumbs {
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      left: auto;
+      transform: translateY(-50%);
+      z-index: 1002;
+      width: 190px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      pointer-events: auto;
+      padding-right: 6px;
+    }
+
+    #scene-thumbs::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .scene-thumb-item {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .scene-thumb-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .scene-thumb-item.active {
+      border-color: #62a7ff;
+      box-shadow: 0 0 0 1px rgba(98, 167, 255, 0.7);
+    }
+
+    .scene-thumb-item:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    .scene-thumb-image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: block;
+      object-fit: cover;
+      background: linear-gradient(140deg, #1a2432 0%, #0a0a0f 100%);
+    }
+
+    .scene-thumb-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 6px 8px;
+      font-size: 12px;
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    #height-control {
+      position: fixed;
+      top: 50%;
+      right: 228px;
+      transform: translateY(-50%);
+      z-index: 1003;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 10px;
+      border-radius: 16px;
+      background: rgba(10, 13, 20, 0.72);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(10px);
+    }
+
+    .height-control-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    #height-readout {
+      min-width: 48px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .height-control-button {
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .height-control-button:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: scale(1.04);
+    }
+
+    .height-control-button:active {
+      transform: scale(0.98);
+    }
+
+    #toggle-button,
+    #fullscreen-button {
+      position: fixed;
+      bottom: 12px;
+      right: 20px;
+      z-index: 1000;
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    #toggle-button {
+      right: 70px;
+    }
+
+    #toggle-button:hover,
+    #fullscreen-button:hover {
+      transform: scale(1.1);
+    }
+
+    #toggle-icon,
+    #fullscreen-icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    #toggle-tooltip,
+    #fullscreen-tooltip {
+      position: absolute;
+      bottom: 36px;
+      right: 0;
+      transform: translateX(10px);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    #toggle-button:hover #toggle-tooltip,
+    #fullscreen-button:hover #fullscreen-tooltip {
+      opacity: 1;
+    }
+
+    #move-pad {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1001;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, rgba(10, 10, 10, 0.26) 0 34px, rgba(10, 10, 10, 0.72) 35px 100%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.38), inset 0 0 18px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+      user-select: none;
+      pointer-events: auto;
+    }
+
+    #move-pad .move-button {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: #f7fbff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 0;
+      font-weight: 700;
+      letter-spacing: 0;
+      cursor: pointer;
+      transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #move-pad .move-button:active,
+    #move-pad .move-button.is-active {
+      background: rgba(255, 255, 255, 0.28);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: scale(0.95);
+    }
+
+    #move-pad .move-button[data-move="forward"] {
+      left: 45px;
+      top: 6px;
+    }
+
+    #move-pad .move-button[data-move="left"] {
+      left: 6px;
+      top: 45px;
+    }
+
+    #move-pad .move-button[data-move="right"] {
+      left: 84px;
+      top: 45px;
+    }
+
+    #move-pad .move-button[data-move="backward"] {
+      left: 45px;
+      top: 84px;
+    }
+
+    #move-pad .move-pad-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      #scene-thumbs {
+        right: 14px;
+        width: 154px;
+      }
+
+      #height-control {
+        right: 176px;
+      }
+
+      #move-pad {
+        width: 126px;
+        height: 126px;
+      }
+
+      #move-pad .move-button {
+        width: 44px;
+        height: 44px;
+      }
+
+      #move-pad .move-button[data-move="forward"] {
+        left: 41px;
+        top: 4px;
+      }
+
+      #move-pad .move-button[data-move="left"] {
+        left: 4px;
+        top: 41px;
+      }
+
+      #move-pad .move-button[data-move="right"] {
+        left: 78px;
+        top: 41px;
+      }
+
+      #move-pad .move-button[data-move="backward"] {
+        left: 41px;
+        top: 78px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      #back-to-landing {
+        top: 64px;
+        left: 12px;
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 12px;
+      }
+
+      #scene-thumbs {
+        top: auto;
+        bottom: 130px;
+        transform: none;
+        max-height: calc(100vh - 260px);
+      }
+
+      #height-control {
+        top: auto;
+        right: 14px;
+        bottom: 88px;
+        transform: none;
+        flex-direction: row;
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 600px) and (orientation: portrait) {
+      #back-to-landing {
+        top: 58px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
+      }
+
+      #scene-thumbs {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        top: auto;
+        bottom: 86px;
+        transform: none;
+        max-height: none;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 10px;
+        padding-right: 0;
+      }
+
+      .scene-thumb-item {
+        min-width: 142px;
+        flex: 0 0 142px;
+      }
+
+      #height-control {
+        right: 12px;
+        bottom: 176px;
+        top: auto;
+        transform: none;
+        flex-direction: column;
+        padding: 8px;
+      }
+
+      #toggle-button,
+      #fullscreen-button {
+        bottom: 18px;
+      }
+
+      #move-pad {
+        bottom: 16px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <a id="logo-button" href="./index.html" aria-label="PropertyFutures home page">
+    <img src="./assets/logo.png" alt="PropertyFutures logo" />
+  </a>
+  <a id="back-to-landing" href="./index.html">Back to PropertyFutures</a>
+
+  <div id="status-pill"></div>
+  <div id="loading-overlay">
+    <div id="earth-loader-shell">
+      <div id="earth-loader" role="img" aria-label="Loading property walkthrough">
+        <div id="earth-loader-core"></div>
+        <div id="earth-loader-clouds"></div>
+        <div id="earth-loader-ring"></div>
+      </div>
+      <div id="earth-loader-text">
+        <strong>Loading walkthrough</strong>
+        <span>Stepping into the property...</span>
+        <span id="earth-loader-tagline">Discover the future of seeing real estate.</span>
+      </div>
+    </div>
+  </div>
+  <select id="scene-select" aria-hidden="true" tabindex="-1"></select>
+  <div id="height-control" aria-label="Height controls">
+    <button type="button" id="height-up" class="height-control-button" aria-label="Increase height">+</button>
+    <div class="height-control-label">Height</div>
+    <div id="height-readout">1.10m</div>
+    <button type="button" id="height-down" class="height-control-button" aria-label="Decrease height">-</button>
+  </div>
+  <div id="scene-thumbs" aria-label="Scene thumbnails"></div>
+  <div id="move-pad" aria-label="Movement controls">
+    <div class="move-pad-center" aria-hidden="true"></div>
+  </div>
+
+  <div id="viewer-container"></div>
+  <div id="nav-container"></div>
+
+  <button id="toggle-button">
+    <img id="toggle-icon" src="./assets/freewalk-icon.png" alt="Toggle view mode" />
+    <div id="toggle-tooltip">Walkaround</div>
+  </button>
+
+  <button id="fullscreen-button">
+    <img id="fullscreen-icon" src="./assets/fullscreen-icon.png" alt="Fullscreen" />
+    <div id="fullscreen-tooltip">Fullscreen</div>
+  </button>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import * as GaussianSplats3D from 'https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js';
+    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/PointerLockControls.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+    import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
+    import nipplejs from 'https://cdn.jsdelivr.net/npm/nipplejs@0.10.2/+esm';
+
+    const startupAssetPath = './assets/Splat/externalview.ksplat';
+    const availableScenes = Object.freeze([
+      {
+        id: 'externalview',
+        label: 'External View',
+        path: './assets/Splat/externalview.ksplat'
+      },
+      {
+        id: 'frontyard',
+        label: 'Front Yard',
+        path: './assets/Splat/FrontYard.ksplat'
+      },
+      {
+        id: 'interior',
+        label: 'Interior',
+        path: './assets/Splat/Interior.ksplat'
+      },
+      {
+        id: 'backyard',
+        label: 'Back Yard',
+        path: './assets/Splat/BackYard.ksplat'
+      }
+    ]);
+
+    const loading = document.getElementById('loading-overlay');
+    const statusPill = document.getElementById('status-pill');
+    const viewerHost = document.getElementById('viewer-container');
+    const toggleButton = document.getElementById('toggle-button');
+    const toggleTooltip = document.getElementById('toggle-tooltip');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const fullScreenButton = document.getElementById('fullscreen-button');
+    const fullScreenTooltip = document.getElementById('fullscreen-tooltip');
+    const fullScreenIcon = document.getElementById('fullscreen-icon');
+    const sceneSelect = document.getElementById('scene-select');
+    const heightUpButton = document.getElementById('height-up');
+    const heightDownButton = document.getElementById('height-down');
+    const heightReadout = document.getElementById('height-readout');
+    const movePad = document.getElementById('move-pad');
+    const sceneThumbs = document.getElementById('scene-thumbs');
+    const sceneThumbnailMap = new Map();
+    const customStartStorageKey = 'vrestates.customStartPresets';
+    const userStartPresets = loadUserStartPresets();
+    const sceneThumbnailAssets = Object.freeze({
+      externalview: './assets/SceneThumbs/externalview.jpg',
+      frontyard: './assets/SceneThumbs/frontyard.jpg',
+      interior: './assets/SceneThumbs/interior.jpg',
+      backyard: './assets/SceneThumbs/backyard.jpg'
+    });
+
+    let viewer;
+    let currentObjectUrl = null;
+    let walkControls = null;
+    let controlCamera = null;
+    let activeLoadToken = 0;
+    let viewerMount = null;
+    let moveState = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+      sprint: false
+    };
+    let moveVelocity = new THREE.Vector3();
+    let moveDirection = new THREE.Vector3();
+    const moveForwardVector = new THREE.Vector3();
+    const moveRightVector = new THREE.Vector3();
+    const playerWorldVector = new THREE.Vector3();
+    let analogMoveX = 0;
+    let analogMoveZ = 0;
+    let previousFrameTime = performance.now();
+    let pointerLocked = false;
+    let movementLoopId = null;
+    let movementClock = null;
+    let controlElement = null;
+    let movementWorld = null;
+    let movementBody = null;
+    let colliderBodies = [];
+    let movementPhysicsEnabled = false;
+    let colliderLoadState = 'uninitialized';
+    let colliderLoadPromise = null;
+    let playerTargetDirection = new THREE.Vector3();
+    let playerMoveVector = new THREE.Vector3();
+    let moveDirectionWorld = new THREE.Vector3();
+    const computedSceneCenterPresets = new Map();
+    const usePhysicsWalkaround = false;
+    const usePointerLock = false;
+    const manualLookSpeed = 0.005;
+    const minCameraHeight = 0.4;
+    const maxCameraHeight = 3.2;
+    const heightAdjustStep = 0.15;
+    const walkSpeedSettings = {
+      walkVelocity: 0.6,
+      damping: 10.0,
+      verticalSpeed: 3.0,
+      sprintMultiplier: 2.0
+    };
+    const joystickMoveScale = 0.03335;
+    const movementPhysicsConfig = Object.freeze({
+      gravity: [0, 0, 0],
+      playerRadius: 0.35,
+      playerHeight: 1.05,
+      playerMass: 70,
+      playerSpeed: 3,
+      sprintMultiplier: 2,
+      damping: 12,
+      stepHeight: 0.12,
+      bodyOffsetY: 0.95
+    });
+    const colliderSourceGroups = Object.freeze([
+      {
+        local: './Collider/floor.glb'
+      },
+      {
+        local: './Collider/walls.glb'
+      },
+      {
+        local: './Collider/collider.glb'
+      }
+    ]);
+    const sceneCameraPresets = Object.freeze({
+      externalview: {
+        position: [1.864132705926673, 1.0968079779294122, -2.4435707786471785],
+        lookAt: [1.3602483778956955, 0.6203221983611571, -1.7231112823297559]
+      },
+      // Fallbacks for scenes that are not listed directly in the source jM array.
+      // These are pulled from transition targetPosition values in the live site's eE metadata.
+      frontyard: {
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
+      },
+      interior: {
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
+      },
+      backyard: {
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
+      }
+    });
+
+    const transitionStartMap = Object.freeze({
+      FrontToInside: {
+        from: 'frontyard',
+        to: 'interior',
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
+      },
+      InsideToFront: {
+        from: 'interior',
+        to: 'frontyard',
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
+      },
+      FrontToBack: {
+        from: 'frontyard',
+        to: 'backyard',
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
+      },
+      BackToFront: {
+        from: 'backyard',
+        to: 'frontyard',
+        position: [2.3930827599890065, 1.096457179803691, 2.7715807762692855],
+        lookAt: [1.449814009496609, 0.9140360637877994, 3.049009327027573]
+      },
+      BackToInside: {
+        from: 'backyard',
+        to: 'interior',
+        position: [19.583278920508018, 1.0208872613821696, -114.62790313452957],
+        lookAt: [19.40095581921557, 0.9916164484466174, -115.6107060172304]
+      },
+      InsideToBack: {
+        from: 'interior',
+        to: 'backyard',
+        position: [-4.679038637491793, 0.9907007863249413, 119.0306742252733],
+        lookAt: [-3.69738880593648, 0.985347937516913, 118.84005692486102]
+      }
+    });
+
+    const transitionStartByScene = Object.freeze({
+      frontyard: {
+        interior: transitionStartMap.InsideToFront,
+        backyard: transitionStartMap.BackToFront,
+        fallback: transitionStartMap.InsideToFront
+      },
+      interior: {
+        frontyard: transitionStartMap.FrontToInside,
+        backyard: transitionStartMap.InsideToBack,
+        fallback: transitionStartMap.FrontToInside
+      },
+      backyard: {
+        frontyard: transitionStartMap.BackToFront,
+        interior: transitionStartMap.InsideToBack,
+        fallback: transitionStartMap.FrontToBack
+      }
+    });
+
+    let lastSceneId = null;
+
+    function getTransitionStartPreset(fromSceneId, toSceneId) {
+      if (!toSceneId) {
+        return null;
+      }
+      const destinationTransitions = transitionStartByScene[toSceneId];
+      if (!destinationTransitions) {
+        return null;
+      }
+      const selected = destinationTransitions[fromSceneId] || destinationTransitions.fallback;
+      if (!selected) {
+        return null;
+      }
+      return {
+        position: selected.position,
+        lookAt: selected.lookAt
+      };
+    }
+
+    function applyScenePreset(camera, cameraPreset) {
+      if (!camera || !cameraPreset) {
+        return;
+      }
+      const [x, y, z] = cameraPreset.position;
+      const [lx, ly, lz] = cameraPreset.lookAt;
+      const cameraY = Number.isFinite(y) ? y : 0.3;
+      camera.position.set(x, cameraY, z);
+      camera.rotation.set(0, 0, 0);
+      camera.lookAt(lx, ly, lz);
+      updateHeightReadout(camera.position.y);
+      if (walkControls?.target) {
+        walkControls.target.set(lx, ly, lz);
+        walkControls.update();
+      }
+      if (controlCamera) {
+        controlCamera.position.copy(camera.position);
+      }
+      syncMovementBodyToCamera();
+    }
+
+    function syncMovementBodyToCamera() {
+      if (!movementBody || !controlCamera) {
+        return;
+      }
+      movementBody.position.set(
+        controlCamera.position.x,
+        controlCamera.position.y - movementPhysicsConfig.bodyOffsetY,
+        controlCamera.position.z
+      );
+      movementBody.velocity.set(0, 0, 0);
+      movementBody.angularVelocity.set(0, 0, 0);
+    }
+
+    function buildTrimeshFromGeometry(geometry, worldMatrix) {
+      if (!geometry || !geometry.isBufferGeometry) {
+        return null;
+      }
+
+      const positionAttribute = geometry.getAttribute('position');
+      const indexAttribute = geometry.index;
+      if (!positionAttribute || !indexAttribute) {
+        return null;
+      }
+
+      const source = positionAttribute.array;
+      const indices = indexAttribute.array;
+      const transformed = new Float32Array(source.length);
+      const sourcePosition = new THREE.Vector3();
+      const matrix = worldMatrix || new THREE.Matrix4();
+      const totalVertices = source.length / 3;
+      for (let i = 0; i < totalVertices; i += 1) {
+        sourcePosition.fromArray(source, i * 3).applyMatrix4(matrix);
+        transformed[i * 3] = sourcePosition.x;
+        transformed[i * 3 + 1] = sourcePosition.y;
+        transformed[i * 3 + 2] = sourcePosition.z;
+      }
+      return { triMesh: new CANNON.Trimesh(Array.from(transformed), Array.from(indices)), count: totalVertices };
+    }
+
+    function destroyMovementWorld() {
+      if (movementWorld) {
+        for (const body of movementWorld.bodies.slice()) {
+          movementWorld.removeBody(body);
+        }
+      }
+      movementBody = null;
+      colliderBodies = [];
+      movementWorld = null;
+      movementPhysicsEnabled = false;
+      colliderLoadState = 'uninitialized';
+    }
+
+    async function loadColliderMesh(url, world) {
+      const loader = new GLTFLoader();
+      const resolved = new URL(url, window.location.href).toString();
+      appendLog(`Loading collider: ${resolved}`);
+      const gltf = await loader.loadAsync(resolved);
+      if (!gltf?.scene) {
+        return false;
+      }
+      gltf.scene.updateMatrixWorld(true);
+      let meshAdded = false;
+      gltf.scene?.traverse((object) => {
+        if (!object?.isMesh || !object.geometry) {
+          return;
+        }
+        const trimesh = buildTrimeshFromGeometry(object.geometry, object.matrixWorld);
+        if (!trimesh?.triMesh) {
+          return;
+        }
+        const body = new CANNON.Body({ mass: 0, shape: trimesh.triMesh });
+        world.addBody(body);
+        colliderBodies.push(body);
+        meshAdded = true;
+      });
+      return meshAdded;
+    }
+
+    async function ensureColliderWorld() {
+      if (colliderLoadState === 'loaded' && movementWorld) {
+        return movementWorld;
+      }
+      if (colliderLoadPromise) {
+        return colliderLoadPromise;
+      }
+      if (!movementWorld) {
+        const world = new CANNON.World({
+          gravity: new CANNON.Vec3(...movementPhysicsConfig.gravity)
+        });
+        world.broadphase = new CANNON.NaiveBroadphase();
+        world.solver.iterations = 12;
+        world.solver.tolerance = 0.001;
+        movementWorld = world;
+      }
+      const world = movementWorld;
+
+      colliderLoadPromise = (async () => {
+        let loadedAny = false;
+        for (const entry of colliderSourceGroups) {
+          const options = [entry.local];
+          let loaded = false;
+          for (const candidate of options) {
+            try {
+              const hadAny = await loadColliderMesh(candidate, world);
+              if (hadAny) {
+                loadedAny = true;
+                loaded = true;
+                break;
+              }
+            } catch (error) {
+              appendLog(`Collider load failed (${candidate}): ${error?.message || error}`, 'error');
+            }
+          }
+          if (!loaded) {
+            appendLog(`Collider unavailable for ${entry.local}`, 'error');
+          }
+        }
+        if (!loadedAny) {
+          appendLog('No collider assets were loaded. Movement will be unbounded.', 'error');
+          colliderLoadState = 'missing';
+          movementPhysicsEnabled = false;
+          return null;
+        }
+        colliderLoadState = 'loaded';
+        return world;
+      })().finally(() => {
+        colliderLoadPromise = null;
+      });
+
+      return colliderLoadPromise;
+    }
+
+    async function initializeMovementPhysics() {
+      if (movementPhysicsEnabled && movementWorld && movementBody) {
+        return true;
+      }
+
+      destroyMovementWorld();
+
+      const world = await ensureColliderWorld();
+      if (!world) {
+        return false;
+      }
+
+      movementBody = new CANNON.Body({
+        mass: movementPhysicsConfig.playerMass,
+        position: new CANNON.Vec3(0, 2, 0),
+        shape: new CANNON.Sphere(movementPhysicsConfig.playerRadius),
+        material: new CANNON.Material('player'),
+        linearDamping: 0.7,
+        fixedRotation: true
+      });
+      movementBody.angularDamping = 1;
+      movementBody.updateMassProperties();
+      world.addBody(movementBody);
+      movementPhysicsEnabled = true;
+      appendLog(`Movement physics ready. colliderLoadState=${colliderLoadState}`);
+      return true;
+    }
+
+    function moveWithPhysics(delta, walkVelocity, sprintMultiplier) {
+      if (!movementWorld || !movementBody) {
+        return;
+      }
+
+      const targetMove = moveDirectionWorld.set(
+        Number(moveState.right) - Number(moveState.left) + (analogMoveX * joystickMoveScale),
+        0,
+        Number(moveState.forward) - Number(moveState.backward) + (analogMoveZ * joystickMoveScale)
+      );
+
+      if (targetMove.lengthSq() < 1e-5) {
+        const damp = Math.max(1, movementPhysicsConfig.damping);
+        movementBody.velocity.x *= Math.exp(-damp * delta);
+        movementBody.velocity.z *= Math.exp(-damp * delta);
+      } else {
+        targetMove.normalize();
+
+        if (controlCamera) {
+          controlCamera.getWorldDirection(playerTargetDirection);
+          playerTargetDirection.y = 0;
+          if (playerTargetDirection.lengthSq() < 1e-5) {
+            playerTargetDirection.set(0, 0, -1);
+          }
+          playerTargetDirection.normalize();
+          playerWorldVector.crossVectors(controlCamera.up, playerTargetDirection).normalize();
+          playerMoveVector.copy(playerTargetDirection).multiplyScalar(targetMove.z).addScaledVector(playerWorldVector, targetMove.x);
+        } else {
+          playerMoveVector.copy(targetMove);
+        }
+
+        if (playerMoveVector.lengthSq() > 1e-5) {
+          playerMoveVector.normalize();
+          const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
+          movementBody.velocity.x = playerMoveVector.x * speed;
+          movementBody.velocity.z = playerMoveVector.z * speed;
+        } else {
+          movementBody.velocity.x = 0;
+          movementBody.velocity.z = 0;
+        }
+      }
+
+      movementBody.velocity.y = 0;
+      movementBody.angularVelocity.set(0, 0, 0);
+      worldStep(delta);
+      syncCameraFromBody();
+    }
+
+    function worldStep(delta) {
+      if (!movementWorld) {
+        return;
+      }
+      if (delta <= 0) {
+        return;
+      }
+      const safeDelta = Math.min(Math.max(delta, 0.001), 1 / 30);
+      movementWorld.step(1 / 60, safeDelta, 10);
+    }
+
+    function syncCameraFromBody() {
+      if (!controlCamera || !movementBody) {
+        return;
+      }
+      controlCamera.position.set(
+        movementBody.position.x,
+        movementBody.position.y + movementPhysicsConfig.bodyOffsetY,
+        movementBody.position.z
+      );
+      if (walkControls?.target) {
+        playerWorldVector.set(0, 0, -1).applyQuaternion(controlCamera.quaternion);
+        walkControls.target.copy(controlCamera.position).add(playerWorldVector);
+      }
+    }
+
+    function buildCenterCameraPreset(bounds) {
+      if (!bounds) {
+        return null;
+      }
+
+      const width = bounds.max.x - bounds.min.x;
+      const height = bounds.max.y - bounds.min.y;
+      const depth = bounds.max.z - bounds.min.z;
+      const radius = Math.max(width, height, depth, 1);
+      const distance = Math.max(radius * 1.8, 1.0);
+      const angleOffset = 0.6;
+
+      return {
+        position: [
+          bounds.center.x + distance * Math.sin(angleOffset),
+          bounds.center.y + distance * 0.25,
+          bounds.center.z + distance * Math.cos(angleOffset)
+        ],
+        lookAt: [bounds.center.x, bounds.center.y, bounds.center.z]
+      };
+    }
+
+    function getArrayBounds(values) {
+      if (!values || values.length < 3) {
+        return null;
+      }
+      let minX = Infinity;
+      let minY = Infinity;
+      let minZ = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      let maxZ = -Infinity;
+
+      for (let i = 0; i < values.length; i += 3) {
+        const x = values[i];
+        const y = values[i + 1];
+        const z = values[i + 2];
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        minZ = Math.min(minZ, z);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        maxZ = Math.max(maxZ, z);
+      }
+
+      if (![minX, minY, minZ, maxX, maxY, maxZ].every(Number.isFinite)) {
+        return null;
+      }
+
+      return {
+        min: new THREE.Vector3(minX, minY, minZ),
+        max: new THREE.Vector3(maxX, maxY, maxZ),
+        center: new THREE.Vector3(
+          (minX + maxX) / 2,
+          (minY + maxY) / 2,
+          (minZ + maxZ) / 2
+        )
+      };
+    }
+
+    function getLoadedSceneBounds(viewerInstance) {
+      if (!viewerInstance) {
+        return null;
+      }
+
+      if (viewerInstance.splatMesh && typeof viewerInstance.splatMesh.computeBoundingBox === 'function') {
+        try {
+          const computedBounds = viewerInstance.splatMesh.computeBoundingBox(true);
+          if (computedBounds?.min && computedBounds?.max &&
+            [computedBounds.min.x, computedBounds.min.y, computedBounds.min.z, computedBounds.max.x, computedBounds.max.y, computedBounds.max.z].every(Number.isFinite)) {
+            return {
+              min: computedBounds.min.clone(),
+              max: computedBounds.max.clone(),
+              center: computedBounds.getCenter(new THREE.Vector3())
+            };
+          }
+        } catch (error) {
+          appendLog(`SplatMesh computeBoundingBox failed: ${error?.message || error}`, 'error');
+        }
+      }
+
+      const tryMesh = (mesh) => {
+        if (!mesh) {
+          return null;
+        }
+        const positionAttribute = mesh?.geometry?.attributes?.position;
+        const positions = positionAttribute?.array || mesh?.geometry?.getAttribute?.('position')?.array;
+        if (positions) {
+          const bounds = getArrayBounds(positions);
+          if (bounds) {
+            return bounds;
+          }
+        }
+
+        if (mesh.geometry?.boundingBox) {
+          const min = mesh.geometry.boundingBox.min;
+          const max = mesh.geometry.boundingBox.max;
+          if (min && max && [min.x, min.y, min.z, max.x, max.y, max.z].every(Number.isFinite)) {
+            return {
+              min: min.clone(),
+              max: max.clone(),
+              center: new THREE.Vector3(
+                (min.x + max.x) / 2,
+                (min.y + max.y) / 2,
+                (min.z + max.z) / 2
+              )
+            };
+          }
+        }
+
+        if (typeof mesh.geometry?.computeBoundingBox === 'function' && !mesh.geometry.boundingBox) {
+          mesh.geometry.computeBoundingBox();
+          if (mesh.geometry.boundingBox) {
+            const min = mesh.geometry.boundingBox.min;
+            const max = mesh.geometry.boundingBox.max;
+            if (min && max && [min.x, min.y, min.z, max.x, max.y, max.z].every(Number.isFinite)) {
+              return {
+                min: min.clone(),
+                max: max.clone(),
+                center: new THREE.Vector3(
+                  (min.x + max.x) / 2,
+                  (min.y + max.y) / 2,
+                  (min.z + max.z) / 2
+                )
+              };
+            }
+          }
+        }
+
+        if (mesh.geometry?.boundingSphere?.isSphere) {
+          const center = mesh.geometry.boundingSphere.center;
+          const radius = mesh.geometry.boundingSphere.radius;
+          if (center && Number.isFinite(radius) && Number.isFinite(center.x) && Number.isFinite(center.y) && Number.isFinite(center.z)) {
+            return {
+              min: new THREE.Vector3(center.x - radius, center.y - radius, center.z - radius),
+              max: new THREE.Vector3(center.x + radius, center.y + radius, center.z + radius),
+              center: center.clone()
+            };
+          }
+        }
+
+        return null;
+      };
+
+      const meshesFromScenes = [];
+      const directMeshes = [
+        viewerInstance.splatMesh,
+        viewerInstance.scene?.splatMesh,
+        viewerInstance.mesh,
+        viewerInstance.scene?.mesh
+      ].filter(Boolean);
+      for (const mesh of directMeshes) {
+        const bounds = tryMesh(mesh);
+        if (bounds) {
+          return bounds;
+        }
+      }
+
+      const addSceneMeshes = viewerInstance.splatMesh?.scenes;
+      if (Array.isArray(addSceneMeshes)) {
+        for (const scene of addSceneMeshes) {
+          if (!scene || !scene.mesh) {
+            continue;
+          }
+          meshesFromScenes.push(scene.mesh);
+        }
+      }
+
+      const rootScenes = [
+        viewerInstance.scene,
+        viewerInstance.renderer?.scene
+      ].filter(Boolean);
+      for (const root of rootScenes) {
+        if (typeof root.traverse === 'function') {
+          root.traverse((obj) => {
+            if (!obj?.geometry) {
+              return;
+            }
+            const bounds = tryMesh(obj);
+            if (bounds) {
+              meshesFromScenes.push(obj);
+            }
+          });
+        }
+      }
+
+      if (meshesFromScenes.length > 0) {
+        for (const candidate of meshesFromScenes) {
+          const bounds = tryMesh(candidate);
+          if (bounds) {
+            return bounds;
+          }
+        }
+      }
+
+      return null;
+    }
+
+    function centerCameraToScene(viewerInstance, sceneId, forcedPreset = null) {
+      const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera;
+      if (!camera) {
+        return;
+      }
+
+      if (!forcedPreset && sceneId === 'externalview' && sceneCameraPresets.externalview) {
+        appendLog(`Using fixed preset for externalview: ${JSON.stringify(sceneCameraPresets.externalview)}`);
+        applyScenePreset(camera, sceneCameraPresets.externalview);
+        return;
+      }
+
+      if (forcedPreset) {
+        applyScenePreset(camera, forcedPreset);
+        return;
+      }
+
+      const cached = sceneId ? computedSceneCenterPresets.get(sceneId) : null;
+      if (cached) {
+        appendLog(`Using cached center start for ${sceneId}`);
+        applyScenePreset(camera, cached);
+        return;
+      }
+
+      const bounds = getLoadedSceneBounds(viewerInstance);
+      if (!bounds) {
+        if (sceneId) {
+          appendLog(`Waiting for scene bounds to compute center (${sceneId})`);
+        }
+        return;
+      }
+
+      const computedPreset = buildCenterCameraPreset(bounds);
+      if (computedPreset && sceneId) {
+        computedSceneCenterPresets.set(sceneId, computedPreset);
+        appendLog(`Computed center start for ${sceneId}: ${JSON.stringify(computedPreset)}`);
+      }
+
+      if (computedPreset) {
+        applyScenePreset(camera, computedPreset);
+        return;
+      }
+
+      if (controlCamera) {
+        controlCamera.position.copy(camera.position);
+      }
+    }
+
+    function scheduleSceneCenter(viewerInstance, sceneId, forcedPreset, remainingAttempts = 30) {
+      const apply = () => {
+        centerCameraToScene(viewerInstance, sceneId, forcedPreset);
+        const isExternal = sceneId === 'externalview';
+        if (remainingAttempts > 0 && !isExternal && !computedSceneCenterPresets.has(sceneId) && !forcedPreset) {
+          requestAnimationFrame(() => {
+            scheduleSceneCenter(viewerInstance, sceneId, forcedPreset, remainingAttempts - 1);
+          });
+        } else if (!isExternal && remainingAttempts <= 0 && !computedSceneCenterPresets.has(sceneId) && !forcedPreset) {
+          appendLog(`Center unavailable for ${sceneId || 'unknown'} after retries.`);
+        }
+      };
+      requestAnimationFrame(apply);
+    }
+
+    function appendLog(message, level = 'info') {
+      if (level === 'error') {
+        console.error(`[Viewer] ${message}`);
+        return;
+      }
+      console.log(`[Viewer] ${message}`);
+    }
+
+    function updateHeightReadout(heightValue = controlCamera?.position?.y) {
+      if (!heightReadout || !Number.isFinite(heightValue)) {
+        return;
+      }
+      heightReadout.textContent = `${heightValue.toFixed(2)}m`;
+    }
+
+    function adjustViewerHeight(delta) {
+      if (!controlCamera) {
+        return;
+      }
+
+      const nextHeight = THREE.MathUtils.clamp(controlCamera.position.y + delta, minCameraHeight, maxCameraHeight);
+      const appliedDelta = nextHeight - controlCamera.position.y;
+      if (Math.abs(appliedDelta) < 1e-5) {
+        return;
+      }
+
+      controlCamera.position.y = nextHeight;
+      if (walkControls?.target) {
+        walkControls.target.y += appliedDelta;
+      }
+      syncMovementBodyToCamera();
+      updateHeightReadout(nextHeight);
+      setStatus(`Height: ${nextHeight.toFixed(2)}m`);
+    }
+
+    function normalizeSceneId(rawId) {
+      return `${rawId || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function getSceneLabel(sceneIdOrPath) {
+      const normalized = normalizeSceneId(getSceneIdFromPath(sceneIdOrPath) || sceneIdOrPath);
+      const matched = availableScenes.find((scene) => normalizeSceneId(scene.id) === normalized);
+      return matched?.label || 'Property View';
+    }
+
+    function setActiveSceneThumb(sceneId) {
+      if (!sceneThumbs) {
+        return;
+      }
+      const target = normalizeSceneId(sceneId);
+      sceneThumbnailMap.forEach((entry) => {
+        entry.button.classList.toggle('active', entry.sceneId === target);
+      });
+    }
+
+    function captureCurrentSceneThumbnail(rawSceneId) {
+      return;
+    }
+
+    function buildSceneThumbnails() {
+      if (!sceneThumbs || !availableScenes.length) {
+        return;
+      }
+
+      sceneThumbs.innerHTML = '';
+      sceneThumbnailMap.clear();
+      availableScenes.forEach((scene) => {
+        const sceneId = normalizeSceneId(scene.id);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'scene-thumb-item';
+        button.dataset.sceneId = sceneId;
+        button.setAttribute('aria-label', scene.label);
+
+        const image = document.createElement('img');
+        image.className = 'scene-thumb-image';
+        image.src = sceneThumbnailAssets[sceneId] || '';
+        image.alt = `${scene.label} initial shot`;
+        image.loading = 'lazy';
+
+        const label = document.createElement('div');
+        label.className = 'scene-thumb-label';
+        label.textContent = scene.label;
+
+        button.appendChild(image);
+        button.appendChild(label);
+        button.addEventListener('click', () => {
+          sceneSelect.value = scene.path;
+          loadSplat(resolveAssetPath(scene.path), undefined);
+        });
+
+        sceneThumbs.appendChild(button);
+        sceneThumbnailMap.set(sceneId, { button, image, sceneId });
+      });
+      setActiveSceneThumb(getSceneIdFromPath(sceneSelect.value) || 'externalview');
+    }
+
+    function initializeSceneDropdown() {
+      sceneSelect.innerHTML = '';
+      availableScenes.forEach((scene) => {
+        const option = document.createElement('option');
+        option.value = scene.path;
+        option.textContent = scene.label;
+        sceneSelect.appendChild(option);
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('scene') || params.get('asset');
+      const resolvedPath = availableScenes.find((scene) => scene.id === requested || scene.path === requested)?.path
+        || availableScenes[0].path;
+      sceneSelect.value = resolvedPath;
+    }
+
+    function loadUserStartPresets() {
+      try {
+        const raw = localStorage.getItem(customStartStorageKey);
+        if (!raw) {
+          return {};
+        }
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function persistUserStartPresets() {
+      try {
+        localStorage.setItem(customStartStorageKey, JSON.stringify(userStartPresets));
+      } catch (error) {
+        appendLog(`Failed to save start presets: ${error?.message || error}`, 'error');
+      }
+    }
+
+    function saveCurrentStartPreset() {
+      if (!controlCamera) {
+        setStatus('Cannot save start point: camera not ready', true);
+        return;
+      }
+
+      const sceneId = getSceneIdFromPath(sceneSelect.value) || lastSceneId || 'externalview';
+      const lookTarget = walkControls?.target
+        ? walkControls.target.clone()
+        : controlCamera.position.clone().add(new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion));
+      const preset = {
+        position: [controlCamera.position.x, controlCamera.position.y, controlCamera.position.z],
+        lookAt: [lookTarget.x, lookTarget.y, lookTarget.z]
+      };
+
+      userStartPresets[sceneId] = preset;
+      computedSceneCenterPresets.set(sceneId, preset);
+      persistUserStartPresets();
+      appendLog(`Saved custom start for ${sceneId}: ${JSON.stringify(preset)}`);
+      setStatus(`Saved start point for ${sceneId}`);
+    }
+
+    window.addEventListener('error', (event) => {
+      appendLog(`${event.message} (${event.filename}:${event.lineno})`, 'error');
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      appendLog(`Unhandled promise: ${event.reason}`, 'error');
+    });
+
+    function setStatus(message, show = true) {
+      statusPill.textContent = message;
+      appendLog(message);
+      statusPill.classList.toggle('active', !!show);
+      if (show) {
+        clearTimeout(window.__statusTimeout);
+        window.__statusTimeout = setTimeout(() => statusPill.classList.remove('active'), 2800);
+      }
+    }
+
+    function setLoading(show) {
+      loading.classList.toggle('visible', !!show);
+    }
+
+    function teardownWalkControls() {
+      if (movementLoopId !== null) {
+        cancelAnimationFrame(movementLoopId);
+        movementLoopId = null;
+      }
+
+      moveState.forward = false;
+      moveState.backward = false;
+      moveState.left = false;
+      moveState.right = false;
+      moveState.up = false;
+      moveState.down = false;
+      moveState.sprint = false;
+      moveVelocity.set(0, 0, 0);
+
+      if (walkControls?.isLocked) {
+        walkControls.unlock();
+      }
+      if (walkControls && typeof walkControls.dispose === 'function') {
+        walkControls.dispose();
+      }
+      if (controlElement) {
+        if (requestPointerLockHandler) {
+          controlElement.removeEventListener('click', requestPointerLockHandler);
+          controlElement.removeEventListener('mousedown', requestPointerLockHandler);
+          controlElement.removeEventListener('pointerdown', requestPointerLockHandler);
+        }
+        if (dragLookMouseDownHandler) {
+          controlElement.removeEventListener('mousedown', dragLookMouseDownHandler);
+        }
+        if (dragLookMouseMoveHandler) {
+          controlElement.removeEventListener('mousemove', dragLookMouseMoveHandler);
+        }
+        if (dragLookMouseUpHandler) {
+          controlElement.removeEventListener('mouseup', dragLookMouseUpHandler);
+          controlElement.removeEventListener('mouseleave', dragLookMouseUpHandler);
+        }
+      }
+      if (requestPointerLockHandler) {
+        window.removeEventListener('pointerdown', requestPointerLockHandler);
+      }
+
+      walkControls = null;
+      controlCamera = null;
+      controlElement = null;
+      pointerLocked = false;
+      movementClock = null;
+
+      document.removeEventListener('pointerlockchange', onPointerLockChange);
+      document.removeEventListener('pointerlockerror', onPointerLockError);
+
+      if (movementKeydownHandler) {
+        window.removeEventListener('keydown', movementKeydownHandler);
+      movementKeydownHandler = null;
+      }
+      if (movementKeyupHandler) {
+        window.removeEventListener('keyup', movementKeyupHandler);
+        movementKeyupHandler = null;
+      }
+      if (movePadPointerUpHandler) {
+        window.removeEventListener('pointerup', movePadPointerUpHandler);
+        movePadPointerUpHandler = null;
+      }
+      clearMovePadInputs();
+      requestPointerLockHandler = null;
+      dragLookMouseDownHandler = null;
+      dragLookMouseMoveHandler = null;
+      dragLookMouseUpHandler = null;
+      dragLookActive = false;
+      destroyMovementWorld();
+    }
+
+    let movementKeydownHandler = null;
+    let movementKeyupHandler = null;
+    let requestPointerLockHandler = null;
+    let movePadPointerUpHandler = null;
+    let dragLookMouseDownHandler = null;
+    let dragLookMouseMoveHandler = null;
+    let dragLookMouseUpHandler = null;
+    let dragLookActive = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let dragMoveLogTimestamp = 0;
+    let joystickManager = null;
+    let movePadBound = false;
+
+    function onPointerLockChange() {
+      if (!walkControls) {
+        return;
+      }
+      pointerLocked = document.pointerLockElement === controlElement;
+      walkControls.isLocked = pointerLocked;
+      if (pointerLocked) {
+        appendLog('Pointer lock enabled');
+      } else {
+        appendLog('Pointer lock disabled');
+      }
+    }
+
+    function onPointerLockError() {
+      appendLog('Pointer lock failed (blocked by browser/user settings)', 'error');
+    }
+
+    function bindMovePadControls() {
+      if (movePadBound || !movePad) {
+        return;
+      }
+      joystickManager = nipplejs.create({
+        zone: movePad,
+        mode: 'static',
+        position: { left: '50%', top: '50%' },
+        color: '#ffffff',
+        size: 88,
+        multitouch: false,
+        restOpacity: 0.75
+      });
+      joystickManager.on('start', () => {
+        appendLog('Joystick start');
+      });
+      joystickManager.on('move', (_evt, data) => {
+        const x = data?.vector?.x || 0;
+        const y = data?.vector?.y || 0;
+        analogMoveX = THREE.MathUtils.clamp(x, -1, 1);
+        analogMoveZ = THREE.MathUtils.clamp(y, -1, 1);
+      });
+      joystickManager.on('end', () => {
+        analogMoveX = 0;
+        analogMoveZ = 0;
+        appendLog('Joystick end');
+      });
+      movePadBound = true;
+      appendLog('Joystick controls bound (nipplejs)');
+    }
+
+    function clearMovePadInputs() {
+      analogMoveX = 0;
+      analogMoveZ = 0;
+      if (joystickManager) {
+        joystickManager.destroy();
+        joystickManager = null;
+        movePadBound = false;
+      }
+      moveState.forward = false;
+      moveState.backward = false;
+      moveState.left = false;
+      moveState.right = false;
+      moveState.up = false;
+      moveState.down = false;
+      moveState.sprint = false;
+    }
+
+    function getSceneIdFromPath(pathOrUrl) {
+      const normalizedPath = `${pathOrUrl || ''}`.toLowerCase().split('?')[0].split('#')[0];
+      const decodedPath = (() => {
+        try {
+          return decodeURIComponent(normalizedPath);
+        } catch (_error) {
+          return normalizedPath;
+        }
+      })();
+      const matched = availableScenes.find((scene) => {
+        const scenePath = scene.path.toLowerCase();
+        return normalizedPath.includes(scene.id) || normalizedPath.endsWith(scenePath) ||
+          decodedPath.includes(scene.id) || decodedPath.endsWith(scenePath);
+      });
+      if (matched) {
+        return matched.id;
+      }
+
+      const fallback = decodedPath.split(/[\\/]/).pop().split('.')[0];
+      if (fallback && availableScenes.some((scene) => scene.id === fallback)) {
+        return fallback;
+      }
+      return null;
+    }
+
+    function createViewerMount() {
+      const mount = document.createElement('div');
+      mount.style.position = 'absolute';
+      mount.style.inset = '0';
+      mount.style.width = '100%';
+      mount.style.height = '100%';
+      return mount;
+    }
+
+    async function disposeViewerSafely() {
+      if (!viewer?.dispose) {
+        if (viewerMount?.parentElement) {
+          viewerMount.parentElement.removeChild(viewerMount);
+        }
+        viewerMount = null;
+        viewer = null;
+        return;
+      }
+
+      try {
+        const result = viewer.dispose();
+        if (result && typeof result.then === 'function') {
+          await result;
+        }
+      } catch (error) {
+        const message = `${error?.message || error}`;
+        if (message.includes('removeChild') && message.includes('not a child of this node')) {
+          appendLog('Previous viewer dispose finished with internal DOM warning (safe to continue).');
+        } else {
+          appendLog(`Previous viewer dispose warning: ${message}`, 'error');
+        }
+      } finally {
+        if (viewerMount?.parentElement) {
+          viewerMount.parentElement.removeChild(viewerMount);
+        }
+        viewerMount = null;
+        viewer = null;
+      }
+    }
+
+    function onMovementKeyDown(event) {
+      if (!walkControls) {
+        return;
+      }
+
+      const key = `${event.code}`.toLowerCase();
+      switch (`${event.code}`.toLowerCase()) {
+        case 'keyw':
+        case 'arrowup':
+          moveState.forward = true;
+          break;
+        case 'keys':
+        case 's':
+        case 'arrowdown':
+          moveState.backward = true;
+          break;
+        case 'keya':
+        case 'a':
+        case 'arrowleft':
+          moveState.left = true;
+          break;
+        case 'keyd':
+        case 'd':
+        case 'arrowright':
+          moveState.right = true;
+          break;
+        case 'space':
+          moveState.up = true;
+          break;
+        case 'keye':
+          moveState.up = true;
+          break;
+        case 'shiftleft':
+        case 'shiftright':
+          moveState.sprint = true;
+          break;
+        case 'keyq':
+          moveState.down = true;
+          break;
+        default:
+          break;
+      }
+
+      if (key.startsWith('arrow')) {
+        event.preventDefault();
+      }
+    }
+
+    function onMovementKeyUp(event) {
+      if (!walkControls) {
+        return;
+      }
+
+      const key = `${event.code}`.toLowerCase();
+      switch (key) {
+        case 'keyw':
+        case 'arrowup':
+          moveState.forward = false;
+          break;
+        case 'keys':
+        case 's':
+        case 'arrowdown':
+          moveState.backward = false;
+          break;
+        case 'keya':
+        case 'a':
+        case 'arrowleft':
+          moveState.left = false;
+          break;
+        case 'keyd':
+        case 'd':
+        case 'arrowright':
+          moveState.right = false;
+          break;
+        case 'space':
+          moveState.up = false;
+          break;
+        case 'keye':
+          moveState.up = false;
+          break;
+        case 'shiftleft':
+        case 'shiftright':
+          moveState.sprint = false;
+          break;
+        case 'keyq':
+          moveState.down = false;
+          break;
+        default:
+          break;
+      }
+
+      if (key.startsWith('arrow')) {
+        event.preventDefault();
+      }
+    }
+
+    function setupWalkaroundControls(viewerInstance) {
+      const renderRoot = viewerInstance?.renderer?.domElement || viewerInstance?.domElement?.querySelector('canvas');
+      const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera || viewerInstance?.scene?.camera;
+      if (!renderRoot || !camera) {
+        appendLog('Walkaround controls unavailable: missing camera or renderer target', 'error');
+        return;
+      }
+
+      controlElement = renderRoot;
+      controlCamera = camera;
+      updateHeightReadout(controlCamera.position.y);
+      moveVelocity.set(0, 0, 0);
+      moveDirection.set(0, 0, 0);
+      previousFrameTime = performance.now();
+      moveDirectionWorld.set(0, 0, 0);
+      syncMovementBodyToCamera();
+      if (usePointerLock) {
+        walkControls = new PointerLockControls(camera, renderRoot);
+      } else {
+        walkControls = {
+          object: controlCamera,
+          getObject: () => controlCamera,
+          isLocked: false,
+          lock: () => {},
+          unlock: () => {},
+          dispose: () => {},
+          target: new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position),
+          update: () => {}
+        };
+      }
+
+      if (renderRoot) {
+        renderRoot.style.touchAction = 'none';
+        renderRoot.style.cursor = 'grab';
+        if (usePointerLock) {
+          if (!requestPointerLockHandler) {
+            requestPointerLockHandler = (event) => {
+              if (event && event.button !== undefined && event.button !== 0) {
+                return;
+              }
+              if (!walkControls?.lock) {
+                return;
+              }
+              walkControls.lock();
+              appendLog('Pointer lock requested. Move mouse to look around.');
+              event.preventDefault();
+            };
+          }
+        } else if (requestPointerLockHandler) {
+          requestPointerLockHandler = null;
+        }
+        if (!dragLookMouseDownHandler) {
+          dragLookMouseDownHandler = (event) => {
+            if (event?.button !== 0) {
+              return;
+            }
+            dragLookActive = true;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+            controlElement.style.cursor = 'grabbing';
+            renderRoot.style.cursor = 'grabbing';
+          };
+        }
+        if (!dragLookMouseMoveHandler) {
+          dragLookMouseMoveHandler = (event) => {
+            if (!dragLookActive || !walkControls || !controlCamera) {
+              return;
+            }
+            const deltaX = Number.isFinite(event.movementX) ? event.movementX : event.clientX - lastMouseX;
+            const deltaY = Number.isFinite(event.movementY) ? event.movementY : event.clientY - lastMouseY;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+            if (deltaX === 0 && deltaY === 0) {
+              return;
+            }
+            if (usePointerLock) {
+              return;
+            }
+
+            const cameraEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+            cameraEuler.setFromQuaternion(controlCamera.quaternion);
+            cameraEuler.y -= deltaX * manualLookSpeed;
+            cameraEuler.x -= deltaY * manualLookSpeed;
+            cameraEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraEuler.x));
+            controlCamera.quaternion.setFromEuler(cameraEuler);
+
+            if (walkControls.target) {
+              const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion);
+              walkControls.target.copy(controlCamera.position).add(forward);
+            }
+          };
+        }
+        if (!dragLookMouseUpHandler) {
+          dragLookMouseUpHandler = () => {
+            if (!dragLookActive) {
+              return;
+            }
+            dragLookActive = false;
+            renderRoot.style.cursor = 'grab';
+          };
+        }
+        if (usePointerLock && requestPointerLockHandler) {
+          renderRoot.addEventListener('click', requestPointerLockHandler, { passive: false });
+        }
+        renderRoot.addEventListener('mousedown', dragLookMouseDownHandler, { passive: true });
+        renderRoot.addEventListener('mousemove', dragLookMouseMoveHandler, { passive: true });
+        renderRoot.addEventListener('mouseup', dragLookMouseUpHandler, { passive: true });
+        renderRoot.addEventListener('mouseleave', dragLookMouseUpHandler, { passive: true });
+        renderRoot.addEventListener('contextmenu', (event) => event.preventDefault(), { passive: false });
+      }
+
+      const viewerControlAdapter = {
+        object: controlCamera,
+        getObject: () => controlCamera,
+        enabled: true,
+        update: () => {
+          if (!walkControls) {
+            return;
+          }
+          if (walkControls && walkControls?.update) {
+            walkControls.update();
+          }
+        }
+      };
+
+      viewerInstance.controls = viewerControlAdapter;
+      movementClock = new THREE.Clock();
+      if (usePointerLock) {
+        document.addEventListener('pointerlockchange', onPointerLockChange);
+        document.addEventListener('pointerlockerror', onPointerLockError);
+      }
+
+      if (!movementKeydownHandler) {
+        movementKeydownHandler = onMovementKeyDown;
+        movementKeyupHandler = onMovementKeyUp;
+        window.addEventListener('keydown', movementKeydownHandler);
+        window.addEventListener('keyup', movementKeyupHandler);
+      }
+      bindMovePadControls();
+
+      const walkVelocity = walkSpeedSettings.walkVelocity;
+      const damping = walkSpeedSettings.damping;
+      const verticalSpeed = walkSpeedSettings.verticalSpeed;
+      const sprintMultiplier = walkSpeedSettings.sprintMultiplier;
+
+      const tick = () => {
+        if (!walkControls || !movementClock) {
+          movementLoopId = null;
+          return;
+        }
+
+        const now = performance.now();
+        const delta = Math.min(0.1, (now - previousFrameTime) / 1000);
+        previousFrameTime = now;
+
+        if (walkControls) {
+          moveDirection.x = (Number(moveState.right) - Number(moveState.left)) + (analogMoveX * joystickMoveScale);
+          moveDirection.z = (Number(moveState.forward) - Number(moveState.backward)) + (analogMoveZ * joystickMoveScale);
+          moveDirection.y = 0;
+          moveDirection.clampLength(0, 1);
+          moveDirection.normalize();
+
+          if (usePhysicsWalkaround && movementWorld && movementBody && movementPhysicsEnabled) {
+            moveWithPhysics(delta, walkVelocity * (movementPhysicsConfig.playerSpeed / 3), movementPhysicsConfig.sprintMultiplier);
+          } else {
+            const speed = walkVelocity * (moveState.sprint ? sprintMultiplier : 1);
+            if (moveDirection.z !== 0) {
+              moveVelocity.z -= moveDirection.z * speed * damping * delta;
+            } else {
+              moveVelocity.z -= moveVelocity.z * 10.0 * delta;
+            }
+
+            if (moveDirection.x !== 0) {
+              moveVelocity.x -= moveDirection.x * speed * damping * delta;
+            } else {
+              moveVelocity.x -= moveVelocity.x * 10.0 * delta;
+            }
+
+            controlCamera.getWorldDirection(moveForwardVector);
+            moveForwardVector.y = 0;
+            if (moveForwardVector.lengthSq() < 1e-5) {
+              moveForwardVector.set(0, 0, -1);
+            }
+            moveForwardVector.normalize();
+            moveRightVector.crossVectors(moveForwardVector, controlCamera.up).normalize();
+
+            const rightDelta = -moveVelocity.x * delta;
+            const forwardDelta = -moveVelocity.z * delta;
+            controlCamera.position.addScaledVector(moveRightVector, rightDelta);
+            controlCamera.position.addScaledVector(moveForwardVector, forwardDelta);
+            if (walkControls.target) {
+              walkControls.target.addScaledVector(moveRightVector, rightDelta);
+              walkControls.target.addScaledVector(moveForwardVector, forwardDelta);
+            }
+            syncMovementBodyToCamera();
+
+            if (moveState.up) {
+              controlCamera.position.y += verticalSpeed * speed * delta * 0.2;
+              if (walkControls.target) {
+                walkControls.target.y += verticalSpeed * speed * delta * 0.2;
+              }
+              updateHeightReadout(controlCamera.position.y);
+            }
+            if (moveState.down) {
+              controlCamera.position.y -= verticalSpeed * speed * delta * 0.2;
+              if (walkControls.target) {
+                walkControls.target.y -= verticalSpeed * speed * delta * 0.2;
+              }
+              updateHeightReadout(controlCamera.position.y);
+            }
+          }
+          if (walkControls?.update) {
+            walkControls.update();
+          }
+        }
+
+        movementLoopId = requestAnimationFrame(tick);
+      };
+
+      tick();
+      appendLog(usePointerLock
+        ? 'Walkaround controls initialized. Click viewer to lock pointer, move mouse to look.'
+        : 'Walkaround controls initialized. Click+drag to look, WASD to move.');
+      appendLog(usePointerLock
+        ? 'Walkaround listeners attached: pointer lock + WASD movement.'
+        : 'Walkaround listeners attached: drag look + WASD movement.');
+    }
+
+    const resolveAssetPath = (path) => new URL(path, window.location.href).toString();
+
+    function detectFormatByPath(pathOrName) {
+      const cleaned = `${pathOrName || ''}`.toLowerCase().split('?')[0].split('#')[0];
+      if (cleaned.endsWith('.ply')) {
+        return 2; // SceneFormat.Ply
+      }
+      if (cleaned.endsWith('.splat')) {
+        return 0; // SceneFormat.Splat
+      }
+      if (cleaned.endsWith('.ksplat')) {
+        return 1; // SceneFormat.KSplat
+      }
+      if (cleaned.endsWith('.spz')) {
+        return 3; // SceneFormat.Spz
+      }
+      return undefined;
+    }
+
+    function formatToName(format) {
+      return format === 2 ? 'PLY'
+        : format === 0 ? 'SPLAT'
+        : format === 1 ? 'KSPLAT'
+        : format === 3 ? 'SPZ'
+        : 'AUTO';
+    }
+
+    async function logSceneMetadata(pathOrUrl) {
+      if (!pathOrUrl || `${pathOrUrl}`.startsWith('blob:')) {
+        return;
+      }
+      try {
+        const response = await fetch(pathOrUrl, { method: 'HEAD' });
+        const sizeHeader = response?.headers?.get('content-length');
+        const contentType = response?.headers?.get('content-type') || 'unknown';
+        if (response && response.ok) {
+          appendLog(`Scene metadata: ${new URL(pathOrUrl, window.location.href).pathname} size=${sizeHeader || 'unknown'} bytes, type=${contentType}`);
+        } else {
+          appendLog(`Scene metadata unavailable: ${response ? `${response.status} ${response.statusText}` : 'no response'}`, 'error');
+        }
+      } catch (error) {
+        appendLog(`Scene metadata read error: ${error?.message || error}`, 'error');
+      }
+    }
+
+    async function ensureViewer(sceneId = 'externalview', sceneCameraPreset = null) {
+      teardownWalkControls();
+      await disposeViewerSafely();
+
+      viewerHost.innerHTML = '';
+      viewerMount = createViewerMount();
+      viewerHost.appendChild(viewerMount);
+      const preset = sceneCameraPreset || {
+        position: [0, 0.3, 5],
+        lookAt: [0, 0, 0]
+      };
+
+      viewer = new GaussianSplats3D.Viewer({
+        rootElement: viewerMount,
+        useBuiltInControls: false,
+        sphericalHarmonicsDegree: 0,
+        gpuAcceleratedSort: false,
+        ignoreDevicePixelRatio: false,
+        dynamicScene: false,
+        sceneRevealMode: GaussianSplats3D.SceneRevealMode.Instant,
+        renderMode: GaussianSplats3D.RenderMode.Always,
+        antialiased: false,
+        focalAdjustment: 1,
+        enableOptionalEffects: false,
+        background: 0x0b0f17,
+        initialCameraPosition: preset.position,
+        initialCameraLookAt: preset.lookAt,
+        cameraUp: [0, 1, 0],
+        sharedMemoryForWorkers: false,
+        webXRMode: GaussianSplats3D.WebXRMode.None
+      });
+      if (usePhysicsWalkaround) {
+        await initializeMovementPhysics();
+      } else {
+        destroyMovementWorld();
+      }
+      setupWalkaroundControls(viewer);
+      if (controlCamera && sceneCameraPreset?.position?.length === 3) {
+        controlCamera.position.set(...sceneCameraPreset.position);
+        updateHeightReadout(controlCamera.position.y);
+        syncMovementBodyToCamera();
+      }
+
+      const viewerNode = viewer.rootElement || viewer.renderer?.domElement || viewer.domElement || viewer.element;
+      if (viewerNode) {
+        viewerNode.style.position = 'absolute';
+        viewerNode.style.inset = '0';
+        viewerNode.style.width = '100%';
+        viewerNode.style.height = '100%';
+        appendLog(`Viewer node mounted (${viewerNode.tagName || 'element'})`);
+      }
+      appendLog(`Viewer created. useBuiltInControls=${viewer.useBuiltInControls}`);
+      toggleTooltip.textContent = 'Walkaround';
+      toggleIcon.src = './assets/freewalk-icon.png';
+    }
+
+    async function loadSplat(pathOrUrl, forcedFormat = undefined) {
+      const loadToken = ++activeLoadToken;
+      if (!pathOrUrl) {
+        setStatus('No path was provided', true);
+        return;
+      }
+
+      const isTempObjectUrl = `${pathOrUrl}`.startsWith('blob:');
+      const selectedSceneId = getSceneIdFromPath(pathOrUrl);
+      const selectedSceneLabel = getSceneLabel(selectedSceneId || pathOrUrl);
+      const hardcodedScenePreset = selectedSceneId ? sceneCameraPresets[selectedSceneId] : null;
+      const selectedPreset = hardcodedScenePreset || sceneCameraPresets.externalview || null;
+      appendLog(`Applying fixed hardcoded preset for ${selectedSceneId || 'externalview'}`);
+      const detectedFormat = forcedFormat || detectFormatByPath(pathOrUrl);
+      appendLog(`Start load: ${pathOrUrl}`);
+      appendLog(`Requested format: ${formatToName(detectedFormat)}`);
+      await logSceneMetadata(pathOrUrl);
+      setLoading(true);
+      setStatus(`Loading ${selectedSceneLabel}...`, true);
+      let lastProgress = -1;
+
+      try {
+        await ensureViewer(selectedSceneId, selectedPreset);
+        if (loadToken !== activeLoadToken) {
+          return;
+        }
+        const baseLoadOptions = {
+          showLoadingUI: false,
+          splatAlphaRemovalThreshold: 0,
+          progressiveLoad: false,
+          format: detectedFormat,
+          rotation: [0, 0, 1, 0],
+          onProgress: (percentComplete, percentCompleteLabel, loaderStatus) => {
+            const rounded = Math.floor(Number(percentComplete || 0) / 10) * 10;
+            if (rounded !== lastProgress) {
+              lastProgress = rounded;
+              appendLog(`Load ${loaderStatus || 'progress'}: ${rounded}% ${percentCompleteLabel ? `(${percentCompleteLabel})` : ''}`.trim());
+            }
+          }
+        };
+
+        try {
+          await viewer.addSplatScene(pathOrUrl, baseLoadOptions);
+        } catch (sceneLoadError) {
+          const message = `${sceneLoadError?.message || sceneLoadError}`;
+          appendLog(`Primary load failed for ${pathOrUrl}: ${message}`, 'error');
+          if (`${detectedFormat}` === '1' && `${pathOrUrl}`.toLowerCase().endsWith('.ksplat')) {
+            appendLog('Retrying with auto-detected format for KSPLAT...');
+            const fallbackOptions = { ...baseLoadOptions };
+            delete fallbackOptions.format;
+            await viewer.addSplatScene(pathOrUrl, fallbackOptions);
+          } else if (loadToken === activeLoadToken) {
+            appendLog(`Retrying scene load by resetting viewer for: ${pathOrUrl}`);
+            await disposeViewerSafely();
+            await ensureViewer(selectedSceneId, selectedPreset);
+            await viewer.addSplatScene(pathOrUrl, baseLoadOptions);
+          } else {
+            throw sceneLoadError;
+          }
+        }
+        if (viewer.start) {
+          viewer.start();
+        }
+        scheduleSceneCenter(viewer, selectedSceneId, selectedPreset);
+        lastSceneId = selectedSceneId;
+        const loadedSceneCount = viewer?.splatMesh?.scenes?.length || 0;
+        appendLog(`Scene ready. URL=${pathOrUrl} nodes=${loadedSceneCount}`);
+        setActiveSceneThumb(selectedSceneId);
+        setStatus(`Now viewing ${selectedSceneLabel}`);
+      } catch (error) {
+        const message = error?.message || String(error);
+        const boundsMatch = /Start offset\s+(\d+)\s+is outside the bounds of the buffer/i.exec(message);
+        if (boundsMatch) {
+          appendLog(`Bounds parse failure: file offset ${boundsMatch[1]} exceeds available buffer length. This usually means the .ksplat is truncated or not matching this viewer parser version.`, 'error');
+        }
+        appendLog(`Failed to load model: ${message}`, 'error');
+        setStatus(`Failed to load model: ${message}`, true);
+        console.error(error);
+      } finally {
+        if (isTempObjectUrl && currentObjectUrl === pathOrUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+        setLoading(false);
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setStatus('Walkaround controls active');
+    });
+
+    fullScreenButton.addEventListener('click', async () => {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen().catch(() => {});
+        fullScreenTooltip.textContent = 'Exit Fullscreen';
+      } else {
+        await document.exitFullscreen().catch(() => {});
+        fullScreenTooltip.textContent = 'Fullscreen';
+      }
+    });
+
+    initializeSceneDropdown();
+    buildSceneThumbnails();
+    sceneSelect.addEventListener('change', () => {
+      const selected = sceneSelect.value;
+      if (!selected) {
+        return;
+      }
+      loadSplat(resolveAssetPath(selected), undefined);
+    });
+    heightUpButton?.addEventListener('click', () => adjustViewerHeight(heightAdjustStep));
+    heightDownButton?.addEventListener('click', () => adjustViewerHeight(-heightAdjustStep));
+
+    const startupAsset = sceneSelect.value || startupAssetPath;
+    const resolvedStartupAsset = resolveAssetPath(startupAsset);
+    setStatus(`Opening ${getSceneLabel(startupAsset)}...`);
+    loadSplat(resolvedStartupAsset);
+  </script>
+</body>
+</html>
+
