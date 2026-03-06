@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VR Estate Viewings for Gurgaon</title>
+  <meta
+    name="description"
+    content="A simple landing page for real estate professionals to showcase immersive property viewings and direct prospects into a live demo listing."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+    rel="stylesheet"
+  >
+  <style>
+    :root {
+      --bg: #f5efe4;
+      --bg-soft: #fffaf1;
+      --ink: #16261d;
+      --muted: #5f695f;
+      --line: rgba(22, 38, 29, 0.12);
+      --accent: #1d5c43;
+      --accent-strong: #103d2b;
+      --accent-soft: #dbe9df;
+      --card: rgba(255, 250, 241, 0.92);
+      --shadow: 0 24px 70px rgba(22, 38, 29, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --max-width: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Space Grotesk", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(29, 92, 67, 0.12), transparent 30%),
+        radial-gradient(circle at 85% 12%, rgba(190, 140, 68, 0.18), transparent 24%),
+        linear-gradient(180deg, #f7f1e6 0%, #efe3cf 100%);
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .page-shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-shell::before,
+    .page-shell::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      filter: blur(10px);
+    }
+
+    .page-shell::before {
+      width: 340px;
+      height: 340px;
+      top: 120px;
+      right: -110px;
+      background: rgba(29, 92, 67, 0.09);
+    }
+
+    .page-shell::after {
+      width: 280px;
+      height: 280px;
+      left: -120px;
+      top: 760px;
+      background: rgba(191, 145, 77, 0.14);
+    }
+
+    .container {
+      width: min(calc(100% - 40px), var(--max-width));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.75);
+      box-shadow: 0 14px 30px rgba(16, 61, 43, 0.14);
+      padding: 8px;
+    }
+
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .topbar-links a:hover {
+      color: var(--ink);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 44px;
+      align-items: center;
+      padding: 42px 0 72px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid rgba(22, 38, 29, 0.08);
+      color: var(--accent-strong);
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 22px;
+      width: fit-content;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #2d8f68, #1d5c43);
+      box-shadow: 0 0 0 5px rgba(45, 143, 104, 0.14);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: -0.03em;
+    }
+
+    h1,
+    h2 {
+      font-family: "Fraunces", serif;
+      line-height: 0.98;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 8vw, 6.4rem);
+      max-width: 12ch;
+    }
+
+    .hero-copy p,
+    .section-intro,
+    .listing-card p,
+    .detail-list li,
+    .benefit-card p,
+    .service-card p,
+    .faq-card p,
+    .cta-panel p,
+    .stat-label,
+    .footer-copy {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .hero-copy p {
+      font-size: 1.08rem;
+      max-width: 60ch;
+      margin: 24px 0 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 20px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      transition: transform 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-primary {
+      background: linear-gradient(180deg, #1f6649, #103d2b);
+      color: #f6efe4;
+      box-shadow: 0 16px 30px rgba(16, 61, 43, 0.22);
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.68);
+      border-color: rgba(22, 38, 29, 0.1);
+      color: var(--ink);
+    }
+
+    .hero-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .hero-note span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-note span::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .hero-visual {
+      position: relative;
+    }
+
+    .showcase {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(22, 38, 29, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .showcase-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4)),
+        rgba(255, 255, 255, 0.4);
+    }
+
+    .showcase-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .showcase-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(22, 38, 29, 0.24);
+    }
+
+    .showcase-label {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--accent-strong);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .showcase-body {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      background:
+        linear-gradient(135deg, rgba(16, 61, 43, 0.06), rgba(191, 145, 77, 0.08)),
+        rgba(255, 255, 255, 0.55);
+    }
+
+    .property-stage {
+      min-height: 290px;
+      border-radius: 22px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background:
+        linear-gradient(180deg, rgba(7, 33, 23, 0.06), rgba(7, 33, 23, 0.48)),
+        radial-gradient(circle at 22% 18%, rgba(255, 240, 216, 0.72), transparent 24%),
+        linear-gradient(140deg, #a7c2b1 0%, #6b8c7b 35%, #365848 65%, #20362c 100%);
+      color: #fff8eb;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .property-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(0deg, rgba(16, 61, 43, 0.55), transparent 40%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.04) 0,
+          rgba(255, 255, 255, 0.04) 1px,
+          transparent 1px,
+          transparent 32px
+        );
+      pointer-events: none;
+    }
+
+    .property-stage > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .property-pill {
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 248, 235, 0.14);
+      border: 1px solid rgba(255, 248, 235, 0.24);
+      font-size: 0.84rem;
+      margin-bottom: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    .property-stage h2 {
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      max-width: 11ch;
+      margin-bottom: 10px;
+    }
+
+    .property-stage p {
+      color: rgba(255, 248, 235, 0.84);
+      margin: 0;
+      max-width: 28ch;
+    }
+
+    .listing-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .listing-stat {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(22, 38, 29, 0.08);
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-strong);
+    }
+
+    .stat-label {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.88rem;
+    }
+
+    section {
+      padding: 32px 0 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(2rem, 5vw, 3.7rem);
+      max-width: 12ch;
+    }
+
+    .section-intro {
+      max-width: 55ch;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .benefit-grid,
+    .service-grid,
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .benefit-card,
+    .service-card,
+    .faq-card,
+    .listing-card,
+    .cta-panel {
+      background: var(--card);
+      border: 1px solid rgba(22, 38, 29, 0.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
+    }
+
+    .benefit-card,
+    .service-card,
+    .faq-card {
+      padding: 22px;
+    }
+
+    .benefit-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .benefit-card h3,
+    .service-card h3,
+    .faq-card h3,
+    .listing-card h3 {
+      font-size: 1.26rem;
+      margin-bottom: 10px;
+    }
+
+    .listing-sample {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+      gap: 22px;
+      align-items: stretch;
+      margin-top: 10px;
+    }
+
+    .listing-card {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .listing-banner {
+      min-height: 250px;
+      padding: 20px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(16, 61, 43, 0.06), rgba(16, 61, 43, 0.54)),
+        radial-gradient(circle at 78% 18%, rgba(255, 224, 188, 0.6), transparent 18%),
+        linear-gradient(135deg, #c7b89c, #8a7f6a 42%, #52655c 100%);
+      display: flex;
+      align-items: end;
+      color: #fff6e8;
+    }
+
+    .listing-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .listing-badges span,
+    .detail-tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(16, 61, 43, 0.08);
+      border: 1px solid rgba(16, 61, 43, 0.12);
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--accent-strong);
+    }
+
+    .detail-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-list li {
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-list strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .cta-panel {
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.94)),
+        var(--card);
+    }
+
+    .cta-panel .button {
+      width: 100%;
+    }
+
+    .cta-panel strong {
+      font-size: 1rem;
+    }
+
+    .cta-list {
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .cta-list span::before {
+      content: "• ";
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .closing {
+      padding: 72px 0 84px;
+    }
+
+    .closing .cta-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 20px;
+      padding: 28px;
+    }
+
+    footer {
+      padding: 0 0 34px;
+    }
+
+    .footer-copy {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-top: 1px solid rgba(22, 38, 29, 0.08);
+      padding-top: 22px;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 1024px) {
+      .hero,
+      .listing-sample,
+      .closing .cta-panel,
+      .benefit-grid,
+      .service-grid,
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head,
+      .footer-copy,
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .listing-meta {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .container {
+        width: min(calc(100% - 28px), var(--max-width));
+      }
+
+      .hero {
+        padding-top: 28px;
+        gap: 28px;
+      }
+
+      h1 {
+        max-width: 10ch;
+      }
+
+      .listing-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-links {
+        flex-wrap: wrap;
+        gap: 10px 16px;
+      }
+
+      .hero-actions {
+        width: 100%;
+      }
+
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="container">
+      <header class="topbar">
+        <a class="brand" href="./landing.html" aria-label="VR Estate Viewings">
+          <img class="brand-mark" src="./assets/logo.png" alt="VR Estate Viewings logo">
+          <span>VR Estate Viewings</span>
+        </a>
+        <nav class="topbar-links" aria-label="Page sections">
+          <a href="#benefits">Why it works</a>
+          <a href="#listing-example">Listing example</a>
+          <a href="#services">What we provide</a>
+          <a href="./index.html">Open demo</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow">Built for real estate teams in Gurgaon and beyond</div>
+            <h1>Let buyers feel the property before they visit.</h1>
+            <p>
+              We create immersive property viewings that help brokers, developers, and marketing teams show
+              space, flow, light, and overall vibe far better than flat photos alone. Prospects can explore
+              listings from the comfort of their homes and arrive with much clearer intent.
+            </p>
+            <p>
+              This is especially powerful for Gurgaon listings where families often compare options across sectors,
+              builder floors, gated communities, and premium apartments before deciding which sites are worth a visit.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="./index.html">View sample property</a>
+              <a class="button button-secondary" href="#listing-example">See how a listing can look</a>
+            </div>
+            <div class="hero-note" aria-label="Key benefits">
+              <span>Better buyer confidence</span>
+              <span>Fewer low-intent visits</span>
+              <span>Useful for local and remote decision-makers</span>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="showcase">
+              <div class="showcase-header">
+                <div class="showcase-dots" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="showcase-label">Interactive listing demo</div>
+              </div>
+              <div class="showcase-body">
+                <div class="property-stage">
+                  <div class="property-pill">Sample showcase for brokers</div>
+                  <h2>Show layout, light, openness, and feel in one place.</h2>
+                  <p>
+                    A much stronger first impression than static galleries when you want buyers to sense the space.
+                  </p>
+                </div>
+                <div class="listing-meta">
+                  <div class="listing-stat">
+                    <div class="stat-value">3D walk-through</div>
+                    <span class="stat-label">Move through the home at your own pace</span>
+                  </div>
+                  <div class="listing-stat">
+                    <div class="stat-value">Scene switching</div>
+                    <span class="stat-label">Show exterior, interior, and key zones</span>
+                  </div>
+                  <div class="listing-stat">
+                    <div class="stat-value">Remote-ready</div>
+                    <span class="stat-label">Useful for families, NRIs, and busy professionals</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="benefits">
+          <div class="section-head">
+            <div>
+              <h2>Why this works for Gurgaon real estate.</h2>
+            </div>
+            <p class="section-intro">
+              In a market where buyers compare many listings quickly, immersive walkthroughs help your property
+              feel more real before the first call, site visit, or negotiation.
+            </p>
+          </div>
+          <div class="benefit-grid">
+            <article class="benefit-card">
+              <div class="benefit-index">01</div>
+              <h3>Show the real feel of the home</h3>
+              <p>
+                Photos can show finishes, but walkthroughs show proportion, openness, circulation, and how rooms
+                connect. Buyers get a much better sense of the place.
+              </p>
+            </article>
+            <article class="benefit-card">
+              <div class="benefit-index">02</div>
+              <h3>Make shortlisting easier</h3>
+              <p>
+                Prospects can decide from home whether a property is worth a site visit, which helps reduce wasted
+                time for both brokers and clients.
+              </p>
+            </article>
+            <article class="benefit-card">
+              <div class="benefit-index">03</div>
+              <h3>Support family decision-making</h3>
+              <p>
+                One person may visit physically, but others often decide too. A shared immersive listing helps
+                families review the property together even when they are in different places.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="listing-example">
+          <div class="section-head">
+            <div>
+              <h2>This is how your listings can look.</h2>
+            </div>
+            <p class="section-intro">
+              Give prospects a polished page that introduces the property clearly and then opens into an interactive
+              walkthrough where they can understand the home at their own comfort and pace.
+            </p>
+          </div>
+          <div class="listing-sample">
+            <article class="listing-card">
+              <div class="listing-banner">
+                <div>
+                  <div class="listing-badges">
+                    <span>Example listing</span>
+                    <span>Gurgaon-ready format</span>
+                  </div>
+                  <h3>4 BHK builder floor in a premium Gurgaon neighborhood</h3>
+                  <p>
+                    A sample presentation for how a real listing can be introduced before opening the interactive
+                    property walkthrough.
+                  </p>
+                </div>
+              </div>
+              <div class="listing-badges" aria-label="Listing highlights">
+                <span class="detail-tag">Exterior preview</span>
+                <span class="detail-tag">Interior movement</span>
+                <span class="detail-tag">Room-to-room feel</span>
+                <span class="detail-tag">Remote buyer friendly</span>
+              </div>
+              <ul class="detail-list">
+                <li>
+                  <strong>What buyers experience</strong>
+                  They can see the entry, move through the home, and get a much better sense of scale, vibe, and flow.
+                </li>
+                <li>
+                  <strong>What brokers gain</strong>
+                  A strong pre-qualification tool that makes listings more memorable and easier to present.
+                </li>
+                <li>
+                  <strong>How it helps conversions</strong>
+                  More serious calls, better-informed site visits, and a clearer emotional connection before the visit.
+                </li>
+              </ul>
+            </article>
+
+            <aside class="cta-panel">
+              <div>
+                <strong>Open the live sample viewer</strong>
+                <p>
+                  This demo shows how a listing can move from a polished landing experience into an interactive
+                  property walkthrough.
+                </p>
+              </div>
+              <div class="cta-list" aria-label="Included capabilities">
+                <span>Interactive exterior and interior exploration</span>
+                <span>Simple movement for a more realistic feel</span>
+                <span>Useful for premium, mid-market, or new-launch presentations</span>
+              </div>
+              <a class="button button-primary" href="./index.html">Open sample property</a>
+              <a class="button button-secondary" href="#services">See what we provide</a>
+            </aside>
+          </div>
+        </section>
+
+        <section id="services">
+          <div class="section-head">
+            <div>
+              <h2>What we provide.</h2>
+            </div>
+            <p class="section-intro">
+              We provide immersive property viewing experiences that help your listings stand out and feel more
+              tangible online.
+            </p>
+          </div>
+          <div class="service-grid">
+            <article class="service-card">
+              <h3>Interactive property walkthroughs</h3>
+              <p>
+                We create immersive viewings that let people explore a property digitally instead of relying only on
+                static photos and short clips.
+              </p>
+            </article>
+            <article class="service-card">
+              <h3>Branded listing presentation pages</h3>
+              <p>
+                We can frame the experience inside a clean page that introduces the property, communicates value,
+                and directs people smoothly into the walkthrough.
+              </p>
+            </article>
+            <article class="service-card">
+              <h3>Sales-friendly showcase flow</h3>
+              <p>
+                The goal is simple: help buyers understand the place better, help teams present more confidently,
+                and make listings feel premium online.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <h2>What people immediately understand from this format.</h2>
+            </div>
+            <p class="section-intro">
+              The strongest value is not just technology. It is clarity. Buyers quickly understand whether the
+              property feels right for them.
+            </p>
+          </div>
+          <div class="faq-grid">
+            <article class="faq-card">
+              <h3>“I can actually imagine being in the home.”</h3>
+              <p>
+                That emotional connection is much harder to build through plain photos, especially for layout-heavy
+                decisions.
+              </p>
+            </article>
+            <article class="faq-card">
+              <h3>“I know if this is worth visiting.”</h3>
+              <p>
+                This helps brokers spend more time on higher-intent prospects and less time repeating low-conviction
+                site visits.
+              </p>
+            </article>
+            <article class="faq-card">
+              <h3>“The property feels more premium online.”</h3>
+              <p>
+                A better digital experience makes the listing presentation feel sharper, more modern, and more
+                differentiated from standard portals.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="closing">
+          <div class="cta-panel">
+            <div>
+              <h2>Show the property better before the visit.</h2>
+              <p>
+                Use this page as your broker-facing introduction, and then direct prospects into the live property
+                viewer to let them experience the space from wherever they are.
+              </p>
+            </div>
+            <a class="button button-primary" href="./index.html">Launch demo listing</a>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-copy">
+          <span>VR Estate Viewings</span>
+          <span>Landing page for promoting immersive real estate walkthrough services.</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
