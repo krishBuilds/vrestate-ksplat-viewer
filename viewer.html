@@ -646,28 +646,53 @@
         right: 12px;
         width: auto;
         top: auto;
-        bottom: 86px;
+        bottom: 74px;
         transform: none;
         max-height: none;
         flex-direction: row;
         overflow-x: auto;
         overflow-y: hidden;
-        gap: 10px;
+        gap: 8px;
         padding-right: 0;
+        padding-bottom: 2px;
+        scroll-snap-type: x proximity;
       }
 
       .scene-thumb-item {
-        min-width: 142px;
-        flex: 0 0 142px;
+        min-width: 112px;
+        flex: 0 0 112px;
+        border-radius: 8px;
+        scroll-snap-align: start;
+      }
+
+      .scene-thumb-label {
+        padding: 4px 6px;
+        font-size: 10px;
       }
 
       #height-control {
         right: 12px;
-        bottom: 176px;
+        bottom: 150px;
         top: auto;
         transform: none;
         flex-direction: column;
-        padding: 8px;
+        padding: 7px;
+        gap: 6px;
+      }
+
+      .height-control-button {
+        width: 34px;
+        height: 34px;
+        font-size: 20px;
+      }
+
+      .height-control-label {
+        font-size: 9px;
+      }
+
+      #height-readout {
+        min-width: 42px;
+        font-size: 11px;
       }
 
       #toggle-button,
