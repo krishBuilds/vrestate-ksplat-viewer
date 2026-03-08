@@ -1686,6 +1686,16 @@
           controlElement.removeEventListener('mouseup', dragLookMouseUpHandler);
           controlElement.removeEventListener('mouseleave', dragLookMouseUpHandler);
         }
+        if (dragLookTouchStartHandler) {
+          controlElement.removeEventListener('touchstart', dragLookTouchStartHandler);
+        }
+        if (dragLookTouchMoveHandler) {
+          controlElement.removeEventListener('touchmove', dragLookTouchMoveHandler);
+        }
+        if (dragLookTouchEndHandler) {
+          controlElement.removeEventListener('touchend', dragLookTouchEndHandler);
+          controlElement.removeEventListener('touchcancel', dragLookTouchEndHandler);
+        }
       }
       if (requestPointerLockHandler) {
         window.removeEventListener('pointerdown', requestPointerLockHandler);
@@ -1717,6 +1727,9 @@
       dragLookMouseDownHandler = null;
       dragLookMouseMoveHandler = null;
       dragLookMouseUpHandler = null;
+      dragLookTouchStartHandler = null;
+      dragLookTouchMoveHandler = null;
+      dragLookTouchEndHandler = null;
       dragLookActive = false;
       destroyMovementWorld();
     }
@@ -1728,6 +1741,9 @@
     let dragLookMouseDownHandler = null;
     let dragLookMouseMoveHandler = null;
     let dragLookMouseUpHandler = null;
+    let dragLookTouchStartHandler = null;
+    let dragLookTouchMoveHandler = null;
+    let dragLookTouchEndHandler = null;
     let dragLookActive = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
@@ -1961,6 +1977,27 @@
       }
     }
 
+    function applyDragLookDelta(deltaX, deltaY) {
+      if (!walkControls || !controlCamera || usePointerLock) {
+        return;
+      }
+      if (deltaX === 0 && deltaY === 0) {
+        return;
+      }
+
+      const cameraEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+      cameraEuler.setFromQuaternion(controlCamera.quaternion);
+      cameraEuler.y -= deltaX * manualLookSpeed;
+      cameraEuler.x -= deltaY * manualLookSpeed;
+      cameraEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraEuler.x));
+      controlCamera.quaternion.setFromEuler(cameraEuler);
+
+      if (walkControls.target) {
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion);
+        walkControls.target.copy(controlCamera.position).add(forward);
+      }
+    }
+
     function setupWalkaroundControls(viewerInstance) {
       const renderRoot = viewerInstance?.renderer?.domElement || viewerInstance?.domElement?.querySelector('canvas');
       const camera = viewerInstance?.renderer?.camera || viewerInstance?.camera || viewerInstance?.scene?.camera;
@@ -2036,21 +2073,7 @@
             if (deltaX === 0 && deltaY === 0) {
               return;
             }
-            if (usePointerLock) {
-              return;
-            }
-
-            const cameraEuler = new THREE.Euler(0, 0, 0, 'YXZ');
-            cameraEuler.setFromQuaternion(controlCamera.quaternion);
-            cameraEuler.y -= deltaX * manualLookSpeed;
-            cameraEuler.x -= deltaY * manualLookSpeed;
-            cameraEuler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraEuler.x));
-            controlCamera.quaternion.setFromEuler(cameraEuler);
-
-            if (walkControls.target) {
-              const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controlCamera.quaternion);
-              walkControls.target.copy(controlCamera.position).add(forward);
-            }
+            applyDragLookDelta(deltaX, deltaY);
           };
         }
         if (!dragLookMouseUpHandler) {
@@ -2062,6 +2085,37 @@
             renderRoot.style.cursor = 'grab';
           };
         }
+        if (!dragLookTouchStartHandler) {
+          dragLookTouchStartHandler = (event) => {
+            if (!event.touches || event.touches.length !== 1) {
+              return;
+            }
+            const touch = event.touches[0];
+            dragLookActive = true;
+            lastMouseX = touch.clientX;
+            lastMouseY = touch.clientY;
+            event.preventDefault();
+          };
+        }
+        if (!dragLookTouchMoveHandler) {
+          dragLookTouchMoveHandler = (event) => {
+            if (!dragLookActive || !event.touches || event.touches.length !== 1) {
+              return;
+            }
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - lastMouseX;
+            const deltaY = touch.clientY - lastMouseY;
+            lastMouseX = touch.clientX;
+            lastMouseY = touch.clientY;
+            applyDragLookDelta(deltaX, deltaY);
+            event.preventDefault();
+          };
+        }
+        if (!dragLookTouchEndHandler) {
+          dragLookTouchEndHandler = () => {
+            dragLookActive = false;
+          };
+        }
         if (usePointerLock && requestPointerLockHandler) {
           renderRoot.addEventListener('click', requestPointerLockHandler, { passive: false });
         }
@@ -2069,6 +2123,10 @@
         renderRoot.addEventListener('mousemove', dragLookMouseMoveHandler, { passive: true });
         renderRoot.addEventListener('mouseup', dragLookMouseUpHandler, { passive: true });
         renderRoot.addEventListener('mouseleave', dragLookMouseUpHandler, { passive: true });
+        renderRoot.addEventListener('touchstart', dragLookTouchStartHandler, { passive: false });
+        renderRoot.addEventListener('touchmove', dragLookTouchMoveHandler, { passive: false });
+        renderRoot.addEventListener('touchend', dragLookTouchEndHandler, { passive: true });
+        renderRoot.addEventListener('touchcancel', dragLookTouchEndHandler, { passive: true });
         renderRoot.addEventListener('contextmenu', (event) => event.preventDefault(), { passive: false });
       }
 
